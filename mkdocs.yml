@@ -45,7 +45,9 @@ markdown_extensions:
 
 plugins:
   - search
-  - macros
+  - macros:
+      modules:
+        - docs._macros.main
   - include-markdown
 
 nav:
@@ -54,6 +56,7 @@ nav:
       - Обзор: architecture/overview.md
       - Компоненты: architecture/components.md
   - Руководства:
+      - Локальная разработка: guides/local-setup.md
       - Стиль документации: guides/style.md
       - Как вносить изменения: guides/contributing.md
   - ADR: adr.md

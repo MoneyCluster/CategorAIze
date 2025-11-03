@@ -8,7 +8,7 @@ title: Диаграммы LikeC4
 
 - Гайд по деплою LikeC4: https://likec4.dev/guides/deploy-github-pages/
 
-{{ likec4_iframe('') }}
+{{ likec4_view('CategorAIze', 'landscape') }}
 
 ## Диаграмма из ADR (временно на Mermaid)
 

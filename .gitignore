@@ -203,3 +203,9 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+site/
+
+# MkDocs and LikeC4 build artifacts
+dist-likec4/
+docs/_static/likec4/

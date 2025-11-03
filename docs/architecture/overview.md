@@ -4,7 +4,7 @@ title: Архитектура — обзор
 
 Короткий обзор архитектуры. Встроенная LikeC4-диаграмма:
 
-{{ likec4_iframe('') }}
+{{ likec4_view('CategorAIze', 'landscape') }}
 
 Если интерактив ещё не собран CI, ниже fallback на Mermaid:
 

@@ -9,6 +9,6 @@ title: Компоненты
 
 Встраивание конкретного LikeC4-представления (если нужно подвид):
 
-{{ likec4_iframe('views/landscape') }}
+{{ likec4_view('CategorAIze', 'landscape') }}
 
 

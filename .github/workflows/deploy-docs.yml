@@ -36,10 +36,14 @@ jobs:
           python -m pip install --upgrade pip
           pip install mkdocs-material mkdocs-macros-plugin mkdocs-include-markdown-plugin
 
+      - name: Setup Pages
+        id: pages
+        uses: actions/configure-pages@v4
+
       - name: Build LikeC4 (optional)
         run: |
           if command -v npx >/dev/null 2>&1; then
-            npx --yes likec4@latest build --config docs/_likec4/likec4.config.ts --output dist-likec4 || true
+            npx --yes likec4@latest build --config docs/_likec4/likec4.config.ts --base "${{ steps.pages.outputs.base_path }}/_static/likec4" --output dist-likec4 || true
             if [ -d dist-likec4 ]; then
               rm -rf docs/_static/likec4
               mkdir -p docs/_static/likec4
@@ -49,9 +53,6 @@ jobs:
 
       - name: Build MkDocs
         run: mkdocs build -v
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
