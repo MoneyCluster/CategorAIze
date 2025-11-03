@@ -20,6 +20,13 @@ if [ "${SKIP_LIKEC4:-0}" != "1" ]; then
   fi
 fi
 
+# Start a local SPA server for LikeC4 to support history routing
+if command -v npx >/dev/null 2>&1; then
+  echo "🛰  Starting LikeC4 SPA server on http://127.0.0.1:5173 (history fallback)"
+  npx --yes serve@14 -s docs/_static/likec4 -l 5173 >/dev/null 2>&1 &
+  LIKEC4_SPA_PID=$!
+fi
+
 # Ensure MkDocs is available
 if ! command -v mkdocs >/dev/null 2>&1; then
   echo "ℹ️ 'mkdocs' CLI not found; trying 'python3 -m mkdocs'"

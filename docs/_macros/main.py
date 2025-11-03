@@ -28,11 +28,30 @@ def define_env(env):
     def likec4_view(project: str, view: str = "landscape", height: str = "70vh") -> str:
         # LikeC4 uses hash-based routing for views
         # Format: index.html#project/ProjectName/views/viewName
-        # Always use relative path - works both locally and on GitHub Pages
-        base = "/_static/likec4/"
-        if getattr(env, 'page', None) and getattr(env.page, 'url', None):
-            base = f"{_rel_root(env.page.url)}_static/likec4/"
-        src = f"{base}index.html"
+        # Always use absolute path from site root - works consistently on all pages
+        base = None
+        try:
+            base = env.conf.get('extra', {}).get('likec4_host')
+        except Exception:
+            base = None
+        
+        # Get site_url base path (e.g., /CategorAIze/ for GitHub Pages)
+        site_base = ""
+        try:
+            site_url = env.conf.get('site_url', '').rstrip('/')
+            if site_url:
+                from urllib.parse import urlparse
+                parsed = urlparse(site_url)
+                site_base = parsed.path.rstrip('/')
+        except Exception:
+            pass
+        
+        if not base:
+            # Use absolute path from site root
+            src = f"{site_base}/_static/likec4/index.html"
+        else:
+            src = f"{base.rstrip('/')}/index.html"
+        
         hash_route = f"project/{project}/views/{view}"
         iframe_id = f"likec4-{project}-{view}".replace(" ", "-").lower()
         return (

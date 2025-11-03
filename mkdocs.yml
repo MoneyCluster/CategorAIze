@@ -50,6 +50,9 @@ plugins:
         - docs._macros.main
   - include-markdown
 
+extra:
+  likec4_host: "http://127.0.0.1:5173"
+
 nav:
   - Введение: index.md
   - Архитектура:
