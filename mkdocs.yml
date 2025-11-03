@@ -65,5 +65,6 @@ nav:
 extra_javascript:
   - https://unpkg.com/mermaid@10/dist/mermaid.min.js
   - _assets/mermaid-init.js
+  - _static/likec4/likec4-views.js
 
 

@@ -58,15 +58,10 @@ def define_env(env):
     env.macro(likec4_iframe)
 
     def likec4_view(project: str, view: str = "landscape", height: str = "70vh") -> str:
-        # LikeC4 uses hash-based routing for views
-        # Format: index.html#project/ProjectName/views/viewName
-        # Always use absolute path from site root - works consistently on all pages
-        base = None
-        try:
-            base = env.conf.get('extra', {}).get('likec4_host')
-        except Exception:
-            base = None
-        
+        """
+        Generate LikeC4 webcomponent instead of iframe.
+        Much simpler and more reliable!
+        """
         # Get site_url base path (e.g., /CategorAIze/ for GitHub Pages)
         site_base = ""
         try:
@@ -78,19 +73,17 @@ def define_env(env):
         except Exception:
             pass
         
-        if not base:
-            # Use absolute path from site root
-            src = f"{site_base}/_static/likec4/index.html"
-        else:
-            src = f"{base.rstrip('/')}/index.html"
+        # Calculate relative path to likec4-views.js for the script src
+        # The script is already included in extra_javascript, but we need the base path
+        base_path = site_base if site_base else ""
         
-        # With --use-hash-history, LikeC4 uses hash-based routing: #/view/{viewName}/
-        # Format is different from non-hash mode
-        hash_route = f"/view/{view}/"
-        iframe_id = f"likec4-{project}-{view}".replace(" ", "-").lower()
+        # Use webcomponent - much simpler than iframe!
+        # The script likec4-views.js is already loaded via extra_javascript
+        # We just need to use the view-id attribute
+        component_id = f"likec4-{project}-{view}".replace(" ", "-").lower()
         return (
-            f'<div style="height:{height}">\n'
-            f'  <iframe id="{iframe_id}" src="{src}#{hash_route}" title="LikeC4" style="width:100%; height:100%; border:0"></iframe>\n'
+            f'<div style="height:{height}; width:100%;">\n'
+            f'  <likec4-view view-id="{view}" browser="true" dynamic-variant="sequence"></likec4-view>\n'
             f'</div>'
         )
 
