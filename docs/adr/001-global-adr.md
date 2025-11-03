@@ -347,84 +347,206 @@ skinparam componentStyle rectangle
 skinparam backgroundColor #FFFFFF
 
 package "Frontend Layer" {
-  package "Web Application" {
-    component [UI Components] as UI
-    component [API Client] as Client
-  }
   component [Web Application] as Web
   component [Mobile App] as Mobile
 }
 
 package "API Layer" {
   package "FastAPI Gateway" {
-    component [Upload Endpoint] as Upload
-    component [Predict Endpoint] as Predict
-    component [Feedback Endpoint] as Feedback
-    component [Train Endpoint] as Train
+    component [Receipt Upload Endpoint] as ReceiptUpload
+    component [Transaction Endpoint] as TransEndpoint
+    component [Account Endpoint] as AccountEndpoint
+    component [Category Endpoint] as CategoryEndpoint
+    component [Predict Endpoint] as PredictEndpoint
+    component [Feedback Endpoint] as FeedbackEndpoint
   }
   component [FastAPI Gateway] as API
 }
 
 package "Business Logic Layer" {
+  component [Receipt Service] as ReceiptService
+  component [OCR Service] as OCRService
   component [Transaction Service] as TransService
+  component [Transaction Group Service] as TransGroupService
+  component [Account Service] as AccountService
   component [Category Service] as CatService
+  component [Store Service] as StoreService
+  component [Tag Service] as TagService
   component [Model Service] as ModelService
   component [Feedback Loop Service] as FeedbackService
 }
 
 package "ML Services Layer" {
   component [Embedding Service] as Embedding
-  note right of Embedding : Общая LLM-модель\n(sentence-transformers)\nall-MiniLM-L6-v2
+  note right of Embedding : Общая модель эмбеддингов\n(sentence-transformers)\nall-MiniLM-L6-v2
   component [User Classifier Service] as Classifier
-  note right of Classifier : Персональный\nклассификатор\n(scikit-learn)\nдля каждого пользователя
+  note right of Classifier : Персональный классификатор\n(scikit-learn)\nдля каждого пользователя
   component [Training Scheduler] as Scheduler
 }
 
 package "Data Layer" {
-  database "PostgreSQL/SQLite" as DB
+  database "PostgreSQL" as DB
   storage "Model Storage (S3/Local)" as ModelStorage
+  storage "File Storage (S3/Local)" as FileStorage
 }
 
 ' Frontend connections
 Web --> API : HTTPS/REST
 Mobile --> API : HTTPS/REST
-UI --> Client
-Client --> API
 
 ' API to Business Logic
-API --> TransService
-API --> CatService
-API --> ModelService
-API --> FeedbackService
+ReceiptUpload --> ReceiptService
+TransEndpoint --> TransService
+AccountEndpoint --> AccountService
+CategoryEndpoint --> CatService
+PredictEndpoint --> ModelService
+FeedbackEndpoint --> FeedbackService
 
-Upload --> TransService
-Predict --> ModelService
-Feedback --> FeedbackService
-Train --> ModelService
-
-' Business Logic to ML Services
+' Business Logic connections
+ReceiptService --> OCRService : process_receipt(file)
+ReceiptService --> StoreService : identify_store(data)
+ReceiptService --> TransGroupService : create_group(receipt_data)
+TransService --> TransGroupService : group_transactions()
+TransService --> AccountService : update_balance()
+AccountService --> TransService : get_account_transactions()
+TransService --> TagService : manage_tags()
 ModelService --> Embedding : get_embedding(text)
 ModelService --> Classifier : predict(embedding)
 ModelService --> Classifier : train(user_data)
-FeedbackService --> Classifier : trigger_retraining()
+FeedbackService --> ModelService : trigger_retraining()
 Scheduler --> ModelService : periodic_retraining()
 
 ' Business Logic to Data Layer
+ReceiptService --> DB : CRUD receipts
+ReceiptService --> FileStorage : save receipt files
+OCRService --> DB : update receipt OCR data
 TransService --> DB : CRUD transactions
+TransGroupService --> DB : CRUD transaction_groups
+AccountService --> DB : CRUD accounts, update balance
 CatService --> DB : CRUD categories
-ModelService --> DB : read training data
+StoreService --> DB : CRUD stores
+TagService --> DB : CRUD tags, transaction_tags
+ModelService --> DB : read training_data
 ModelService --> ModelStorage : save/load models
-FeedbackService --> DB : save feedback
+FeedbackService --> DB : save feedback_events
 
 ' ML Services to Data Layer
 Classifier --> Embedding : use embeddings
 Classifier --> ModelStorage : load/save model
-Classifier --> DB : read training data
+Classifier --> DB : read training_data
 
 @enduml
 ```
 
-### Sequence Diagram: Transaction Classification Flow
+### Sequence Diagram: Receipt Upload and Processing Flow
+
+```plantuml
+@startuml
+!theme plain
+skinparam backgroundColor #FFFFFF
+
+actor User
+participant "Web App" as Web
+participant "API Gateway" as API
+participant "Receipt Service" as ReceiptSvc
+participant "OCR Service" as OCRSvc
+participant "Store Service" as StoreSvc
+participant "Transaction Group Service" as TransGroupSvc
+participant "Model Service" as ModelSvc
+participant "Transaction Service" as TransSvc
+participant "Database" as DB
+participant "File Storage" as FileStorage
+
+== Upload Receipt ==
+User -> Web: Upload receipt image
+Web -> API: POST /receipts/upload
+activate API
+API -> ReceiptSvc: save_receipt_file(user_id, file)
+activate ReceiptSvc
+ReceiptSvc -> FileStorage: save file
+activate FileStorage
+FileStorage --> ReceiptSvc: file_path
+deactivate FileStorage
+ReceiptSvc -> DB: INSERT receipt (status: pending)
+activate DB
+DB --> ReceiptSvc: receipt_id
+deactivate DB
+deactivate ReceiptSvc
+API --> Web: {receipt_id, status: "uploaded"}
+deactivate API
+Web --> User: Receipt uploaded
+
+== Process Receipt (Background) ==
+ReceiptSvc -> OCRSvc: process_receipt(receipt_id, file_path)
+activate OCRSvc
+OCRSvc -> FileStorage: read file
+activate FileStorage
+FileStorage --> OCRSvc: file_data
+deactivate FileStorage
+OCRSvc -> OCRSvc: extract_text (OCR)
+OCRSvc -> OCRSvc: parse_receipt_data
+OCRSvc --> ReceiptSvc: {text, items, total_amount, date, store_name}
+deactivate OCRSvc
+
+ReceiptSvc -> StoreSvc: identify_or_create_store(user_id, store_name)
+activate StoreSvc
+StoreSvc -> DB: find_store_by_name(user_id, store_name)
+activate DB
+alt Store exists
+  DB --> StoreSvc: store_id
+else Store not found
+  StoreSvc -> DB: INSERT store
+  DB --> StoreSvc: new_store_id
+end
+deactivate DB
+StoreSvc --> ReceiptSvc: store_id
+deactivate StoreSvc
+
+ReceiptSvc -> DB: UPDATE receipt (ocr_text, extracted_data, store_id, status: processing)
+activate DB
+DB --> ReceiptSvc: updated
+deactivate DB
+
+ReceiptSvc -> TransGroupSvc: create_transaction_group(user_id, receipt_id, store_id, items)
+activate TransGroupSvc
+TransGroupSvc -> DB: INSERT transaction_group
+activate DB
+DB --> TransGroupSvc: group_id
+deactivate DB
+
+loop For each item in receipt
+  TransGroupSvc -> ModelSvc: predict_category(user_id, item.description)
+  activate ModelSvc
+  ModelSvc -> ModelSvc: get_embedding(item.description)
+  ModelSvc -> ModelSvc: predict_category(embedding)
+  ModelSvc --> TransGroupSvc: {predicted_category_id, confidence}
+  deactivate ModelSvc
+  
+  TransGroupSvc -> TransSvc: create_transaction(group_id, item, predicted_category_id)
+  activate TransSvc
+  TransSvc -> DB: INSERT transaction
+  activate DB
+  DB --> TransSvc: transaction_id
+  deactivate DB
+  deactivate TransSvc
+end
+
+TransGroupSvc -> DB: UPDATE transaction_group (total_amount)
+activate DB
+DB --> TransGroupSvc: updated
+deactivate DB
+deactivate TransGroupSvc
+
+ReceiptSvc -> DB: UPDATE receipt (status: completed)
+activate DB
+DB --> ReceiptSvc: updated
+deactivate DB
+deactivate ReceiptSvc
+
+@enduml
+```
+
+### Sequence Diagram: Manual Transaction Creation with Category Prediction
 
 ```plantuml
 @startuml
@@ -435,40 +557,21 @@ actor User
 participant "Web App" as Web
 participant "API Gateway" as API
 participant "Transaction Service" as TransSvc
+participant "Account Service" as AccountSvc
 participant "Model Service" as ModelSvc
 participant "Embedding Service" as Embedding
 participant "User Classifier" as Classifier
 participant "Database" as DB
 participant "Model Storage" as Storage
 
-== Upload Transaction ==
-User -> Web: Upload receipt/transaction
-Web -> API: POST /upload
+== Create Transaction ==
+User -> Web: Create transaction (description, amount, account)
+Web -> API: POST /transactions
 activate API
-API -> TransSvc: save_transaction(user_id, description, amount)
+API -> TransSvc: create_transaction(user_id, account_id, description, amount)
 activate TransSvc
-TransSvc -> DB: INSERT transaction
-activate DB
-DB --> TransSvc: transaction_id
-deactivate DB
-deactivate TransSvc
-API --> Web: {transaction_id, status: "saved"}
-deactivate API
-Web --> User: Transaction saved
 
-== Predict Category ==
-User -> Web: Request category prediction
-Web -> API: POST /predict {transaction_id}
-activate API
-API -> TransSvc: get_transaction(transaction_id)
-activate TransSvc
-TransSvc -> DB: SELECT transaction
-activate DB
-DB --> TransSvc: transaction data
-deactivate DB
-deactivate TransSvc
-
-API -> ModelSvc: predict_category(user_id, description)
+TransSvc -> ModelSvc: predict_category(user_id, description)
 activate ModelSvc
 
 ModelSvc -> Embedding: get_embedding(description)
@@ -478,58 +581,189 @@ deactivate Embedding
 
 ModelSvc -> Storage: load_user_model(user_id)
 activate Storage
-Storage --> ModelSvc: user_classifier_model
+alt Model exists
+  Storage --> ModelSvc: user_classifier_model
+  ModelSvc -> Classifier: predict(embedding, model)
+  activate Classifier
+  Classifier --> ModelSvc: {category_id, confidence}
+  deactivate Classifier
+else No model yet
+  ModelSvc --> TransSvc: null
+end
 deactivate Storage
+deactivate ModelSvc
 
-ModelSvc -> Classifier: predict(embedding, model)
-activate Classifier
-Classifier --> ModelSvc: {category_id, confidence}
-deactivate Classifier
-
-ModelSvc -> DB: get_category_name(category_id)
+TransSvc -> DB: INSERT transaction (predicted_category_id)
 activate DB
-DB --> ModelSvc: category_name
+DB --> TransSvc: transaction_id
 deactivate DB
 
-deactivate ModelSvc
-API --> Web: {category_id, category_name, confidence}
-deactivate API
-Web --> User: Display predicted category
+TransSvc -> AccountSvc: update_account_balance(account_id)
+activate AccountSvc
+AccountSvc -> DB: UPDATE account balance
+activate DB
+DB --> AccountSvc: updated
+deactivate DB
+deactivate AccountSvc
 
-== User Feedback ==
-User -> Web: Correct category (if wrong)
+deactivate TransSvc
+API --> Web: {transaction_id, predicted_category_id, confidence}
+deactivate API
+Web --> User: Transaction created with predicted category
+
+@enduml
+```
+
+### Sequence Diagram: User Feedback and Model Retraining
+
+```plantuml
+@startuml
+!theme plain
+skinparam backgroundColor #FFFFFF
+
+actor User
+participant "Web App" as Web
+participant "API Gateway" as API
+participant "Feedback Service" as FeedbackSvc
+participant "Transaction Service" as TransSvc
+participant "Model Service" as ModelSvc
+participant "Embedding Service" as Embedding
+participant "User Classifier" as Classifier
+participant "Database" as DB
+participant "Model Storage" as Storage
+
+== User Corrects Category ==
+User -> Web: Correct category for transaction
 Web -> API: POST /feedback {transaction_id, correct_category_id}
 activate API
-API -> FeedbackService: save_feedback(transaction_id, correct_category_id)
-activate FeedbackService
-FeedbackService -> DB: UPDATE transaction category
+API -> FeedbackSvc: save_feedback(transaction_id, correct_category_id)
+activate FeedbackSvc
+
+FeedbackSvc -> TransSvc: get_transaction(transaction_id)
+activate TransSvc
+TransSvc -> DB: SELECT transaction
 activate DB
-FeedbackService -> Embedding: get_embedding(transaction.description)
-activate Embedding
-Embedding --> FeedbackService: embedding_vector
-deactivate Embedding
-FeedbackService -> DB: INSERT training_data(embedding, category)
-DB --> FeedbackService: success
+DB --> TransSvc: transaction data
 deactivate DB
-FeedbackService -> ModelSvc: trigger_retraining(user_id)
+deactivate TransSvc
+
+FeedbackSvc -> DB: UPDATE transaction (category_id = correct_category_id)
+activate DB
+DB --> FeedbackSvc: updated
+deactivate DB
+
+FeedbackSvc -> Embedding: get_embedding(transaction.description)
+activate Embedding
+Embedding --> FeedbackSvc: embedding_vector[384]
+deactivate Embedding
+
+FeedbackSvc -> DB: INSERT training_data(embedding, correct_category_id)
+activate DB
+DB --> FeedbackSvc: training_data_id
+deactivate DB
+
+FeedbackSvc -> DB: INSERT feedback_event(transaction_id, predicted_category_id, correct_category_id)
+activate DB
+DB --> FeedbackSvc: feedback_id
+deactivate DB
+
+FeedbackSvc -> ModelSvc: trigger_retraining(user_id)
 activate ModelSvc
+ModelSvc -> DB: INSERT training_history (status: pending)
+activate DB
+DB --> ModelSvc: history_id
+deactivate DB
+
 ModelSvc -> DB: get_all_training_data(user_id)
 activate DB
 DB --> ModelSvc: training_dataset
 deactivate DB
+
+ModelSvc -> DB: UPDATE training_history (status: running)
+activate DB
+DB --> ModelSvc: updated
+deactivate DB
+
 ModelSvc -> Classifier: train(dataset)
 activate Classifier
-Classifier --> ModelSvc: trained_model
+Classifier --> ModelSvc: trained_model, metrics
 deactivate Classifier
+
 ModelSvc -> Storage: save_model(user_id, model)
 activate Storage
 Storage --> ModelSvc: saved
 deactivate Storage
+
+ModelSvc -> DB: UPDATE user_classifier_model (accuracy, metrics, trained_at)
+activate DB
+DB --> ModelSvc: updated
+deactivate DB
+
+ModelSvc -> DB: UPDATE training_history (status: completed, metrics, duration)
+activate DB
+DB --> ModelSvc: updated
+deactivate DB
+
 deactivate ModelSvc
-deactivate FeedbackService
-API --> Web: {status: "feedback_saved", "retraining_triggered"}
+deactivate FeedbackSvc
+API --> Web: {status: "feedback_saved", "retraining_completed"}
 deactivate API
-Web --> User: Category updated, model will retrain
+Web --> User: Category updated, model retrained
+
+@enduml
+```
+
+### Sequence Diagram: Get Account Balance
+
+```plantuml
+@startuml
+!theme plain
+skinparam backgroundColor #FFFFFF
+
+actor User
+participant "Web App" as Web
+participant "API Gateway" as API
+participant "Account Service" as AccountSvc
+participant "Transaction Service" as TransSvc
+participant "Database" as DB
+
+== Get Account Balance ==
+User -> Web: View account balance
+Web -> API: GET /accounts/{account_id}/balance
+activate API
+API -> AccountSvc: get_account_balance(account_id)
+activate AccountSvc
+
+AccountSvc -> DB: SELECT account (balance)
+activate DB
+alt Balance is cached and fresh
+  DB --> AccountSvc: balance
+else Balance needs recalculation
+  AccountSvc -> TransSvc: calculate_balance_from_transactions(account_id)
+  activate TransSvc
+  TransSvc -> DB: SELECT SUM(amount) WHERE account_id = X AND type = 'income'
+  activate DB
+  DB --> TransSvc: total_income
+  deactivate DB
+  TransSvc -> DB: SELECT SUM(amount) WHERE account_id = X AND type = 'expense'
+  activate DB
+  DB --> TransSvc: total_expense
+  deactivate DB
+  TransSvc -> TransSvc: balance = total_income - total_expense
+  TransSvc --> AccountSvc: calculated_balance
+  AccountSvc -> DB: UPDATE account (balance = calculated_balance)
+  activate DB
+  DB --> AccountSvc: updated
+  deactivate DB
+  deactivate TransSvc
+end
+deactivate DB
+
+AccountSvc --> API: balance
+deactivate AccountSvc
+API --> Web: {account_id, balance, currency}
+deactivate API
+Web --> User: Display account balance
 
 @enduml
 ```
@@ -545,81 +779,166 @@ class User {
   - id: UUID
   - email: String
   - created_at: DateTime
+  + get_accounts(): List[Account]
   + get_transactions(): List[Transaction]
   + get_categories(): List[Category]
+  + get_receipts(): List[Receipt]
   + get_model(): UserClassifierModel
 }
 
-class Transaction {
+class Account {
   - id: UUID
   - user_id: UUID
-  - description: String
-  - amount: Decimal
-  - category_id: UUID
-  - embedding: Vector[384]
-  - created_at: DateTime
-  + predict_category(): Category
-  + update_category(category_id: UUID): void
-  + to_training_sample(): TrainingData
+  - parent_account_id: UUID
+  - name: String
+  - balance: Decimal
+  - currency: String
+  + get_balance(): Decimal
+  + get_transactions(): List[Transaction]
+  + get_children(): List[Account]
 }
 
 class Category {
   - id: UUID
   - user_id: UUID
+  - parent_id: UUID
   - name: String
-  - created_at: DateTime
+  - type: Enum
   + get_transactions(): List[Transaction]
+  + get_children(): List[Category]
+}
+
+class Transaction {
+  - id: UUID
+  - account_id: UUID
+  - transaction_group_id: UUID
+  - type: Enum
+  - amount: Decimal
+  - description: String
+  - category_id: UUID
+  - predicted_category_id: UUID
+  - comment: String
+  + predict_category(): Category
+  + update_category(category_id: UUID): void
+  + add_tag(tag_id: UUID): void
+  + to_training_sample(): TrainingData
+}
+
+class TransactionGroup {
+  - id: UUID
+  - user_id: UUID
+  - receipt_id: UUID
+  - store_id: UUID
+  - total_amount: Decimal
+  + get_transactions(): List[Transaction]
+  + get_receipt(): Receipt
+}
+
+class Receipt {
+  - id: UUID
+  - user_id: UUID
+  - store_id: UUID
+  - file_path: String
+  - ocr_text: String
+  - extracted_data: JSON
+  - processing_status: String
+  + process(): void
+  + get_transaction_group(): TransactionGroup
+}
+
+class Store {
+  - id: UUID
+  - user_id: UUID
+  - name: String
+  - address: String
+  + get_receipts(): List[Receipt]
+}
+
+class Tag {
+  - id: UUID
+  - user_id: UUID
+  - name: String
+  - color: String
+}
+
+class TransactionTag {
+  - transaction_id: UUID
+  - tag_id: UUID
 }
 
 class TrainingData {
   - id: UUID
   - user_id: UUID
+  - transaction_id: UUID
   - embedding: Vector[384]
   - category_id: UUID
-  - created_at: DateTime
+  - source: String
 }
 
 class UserClassifierModel {
   - user_id: UUID
   - model_type: String
-  - parameters: Dict
+  - model_path: String
   - accuracy: Float
   - trained_at: DateTime
-  - model_path: String
   + predict(embedding: Vector): Tuple[Category, Float]
   + train(dataset: List[TrainingData]): void
-  + save(path: String): void
-  + load(path: String): UserClassifierModel
 }
 
 class EmbeddingModel {
   - model_name: String
-  - version: String
   - dimension: Int = 384
   + encode(text: String): Vector[384]
   + encode_batch(texts: List[String]): List[Vector[384]]
 }
 
+class FeedbackEvent {
+  - id: UUID
+  - transaction_id: UUID
+  - predicted_category_id: UUID
+  - correct_category_id: UUID
+  - feedback_type: String
+}
+
 ' Relationships
-User "1" *-- "many" Transaction : has
+User "1" *-- "many" Account : has
 User "1" *-- "many" Category : defines
+User "1" *-- "many" Receipt : has
+User "1" *-- "many" Store : has
+User "1" *-- "many" Tag : has
 User "1" -- "1" UserClassifierModel : owns
+
+Account "1" *-- "many" Account : parent-child
+Account "1" *-- "many" Transaction : has
+
+Category "1" *-- "many" Category : parent-child
 Category "1" *-- "many" Transaction : categorizes
+Category "1" *-- "many" Transaction : predicted_for
+
+TransactionGroup "1" *-- "many" Transaction : contains
+TransactionGroup "1" -- "1" Receipt : created_from
+
+Receipt "1" -- "1" Store : from
+Receipt "1" -- "1" TransactionGroup : generates
+
+Transaction "many" *-- "many" Tag : tagged_with
+
 Transaction "1" -- "0..1" TrainingData : converts to
 UserClassifierModel "1" *-- "many" TrainingData : trained on
 UserClassifierModel ..> EmbeddingModel : uses
 
+Transaction "1" *-- "many" FeedbackEvent : has
+
 note right of UserClassifierModel
   Персональный классификатор
   для каждого пользователя.
-  Использует общий EmbeddingModel
-  для получения эмбеддингов.
+  Использует общий EmbeddingModel.
 end note
 
-note right of EmbeddingModel
-  Общая модель эмбеддингов
-  для всех пользователей.
-  Не требует переобучения.
+note right of TransactionGroup
+  Группа транзакций из одного чека.
+  Один чек может содержать
+  несколько позиций.
 end note
 
 @enduml
@@ -655,49 +974,82 @@ node "ML Services Cluster" {
   [Classifier Service\n(Multiple Instances)] as ClassifierSvc2
 }
 
+node "Processing Services" {
+  [OCR Service\n(Multiple Instances)] as OCRSvc1
+  [OCR Service\n(Multiple Instances)] as OCRSvc2
+  [Receipt Processing Queue] as ReceiptQueue
+}
+
 node "Database Server" {
   database "PostgreSQL" as PG {
-    [Transaction Data]
     [User Data]
+    [Account Data]
+    [Transaction Data]
     [Category Data]
+    [Receipt Data]
+    [Store Data]
+    [Tag Data]
     [Training Data]
+    [Model Metadata]
   }
 }
 
-node "Model Storage" {
-  storage "S3 / Local FS" as Storage {
+node "Storage Cluster" {
+  storage "Model Storage\n(S3/Local FS)" as ModelStorage {
     [User Models\n(joblib/pickle)]
+  }
+  storage "File Storage\n(S3/Local FS)" as FileStorage {
+    [Receipt Images]
+    [Receipt PDFs]
   }
 }
 
 node "Background Workers" {
-  [Training Scheduler] as Scheduler
-  [Retraining Queue] as Queue
+  [Training Scheduler] as TrainScheduler
+  [Receipt Processor] as ReceiptProcessor
+  [Retraining Queue] as TrainQueue
 }
 
 Browser --> CDN : HTTPS
 MobileApp --> CDN : HTTPS
 CDN --> WebApp : HTTP
 WebApp --> FastAPI : REST API
+
 FastAPI --> EmbedSvc : gRPC / HTTP
 FastAPI --> ClassifierSvc1 : gRPC / HTTP
 FastAPI --> ClassifierSvc2 : gRPC / HTTP
 FastAPI --> PG : SQL
-ClassifierSvc1 --> Storage : Read/Write models
-ClassifierSvc2 --> Storage : Read/Write models
-Scheduler --> FastAPI : Trigger retraining
-Scheduler --> Queue : Queue training jobs
-Queue --> ClassifierSvc1 : Training tasks
-Queue --> ClassifierSvc2 : Training tasks
+FastAPI --> ReceiptQueue : Queue receipt processing
+
+ReceiptQueue --> OCRSvc1 : OCR tasks
+ReceiptQueue --> OCRSvc2 : OCR tasks
+OCRSvc1 --> FileStorage : Read receipt files
+OCRSvc2 --> FileStorage : Read receipt files
+
+ClassifierSvc1 --> ModelStorage : Read/Write models
+ClassifierSvc2 --> ModelStorage : Read/Write models
+
+TrainScheduler --> FastAPI : Trigger retraining
+TrainScheduler --> TrainQueue : Queue training jobs
+TrainQueue --> ClassifierSvc1 : Training tasks
+TrainQueue --> ClassifierSvc2 : Training tasks
+
+ReceiptProcessor --> ReceiptQueue : Process receipts
+ReceiptProcessor --> FastAPI : Update receipt status
 
 note right of EmbedSvc
-  Общий эмбеддер
+  Общая модель эмбеддингов
   для всех пользователей
 end note
 
 note right of ClassifierSvc1
   Персональные классификаторы
   масштабируются горизонтально
+end note
+
+note right of OCRSvc1
+  OCR сервисы для обработки
+  чеков в фоновом режиме
 end note
 
 @enduml
