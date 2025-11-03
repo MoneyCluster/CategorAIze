@@ -1,9 +1,9 @@
 site_name: CategorAIze Docs
 site_description: Documentation for CategorAIze
-site_url: https://<org>.github.io/CategorAIze/
+site_url: https://moneycluster.github.io/CategorAIze/
 
-repo_name: <org>/CategorAIze
-repo_url: https://github.com/<org>/CategorAIze
+repo_name: moneycluster/CategorAIze
+repo_url: https://github.com/moneycluster/CategorAIze
 edit_uri: edit/main/docs/
 
 docs_dir: docs
@@ -43,8 +43,19 @@ markdown_extensions:
           class: mermaid
   - pymdownx.details
 
+plugins:
+  - search
+  - macros
+  - include-markdown
+
 nav:
   - Введение: index.md
+  - Архитектура:
+      - Обзор: architecture/overview.md
+      - Компоненты: architecture/components.md
+  - Руководства:
+      - Стиль документации: guides/style.md
+      - Как вносить изменения: guides/contributing.md
   - ADR: adr.md
   - Диаграммы (LikeC4): likec4/index.md
 

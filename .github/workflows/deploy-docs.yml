@@ -34,16 +34,16 @@ jobs:
       - name: Install MkDocs
         run: |
           python -m pip install --upgrade pip
-          pip install mkdocs-material
+          pip install mkdocs-material mkdocs-macros-plugin mkdocs-include-markdown-plugin
 
       - name: Build LikeC4 (optional)
         run: |
           if command -v npx >/dev/null 2>&1; then
-            npx --yes likec4@latest build --output dist-likec4 || true
+            npx --yes likec4@latest build --config docs/likec4.config.ts --output dist-likec4 || true
             if [ -d dist-likec4 ]; then
-              rm -rf docs/likec4
-              mkdir -p docs/likec4
-              cp -R dist-likec4/* docs/likec4/ || true
+              rm -rf docs/_static/likec4
+              mkdir -p docs/_static/likec4
+              cp -R dist-likec4/* docs/_static/likec4/ || true
             fi
           fi
 

@@ -8,11 +8,7 @@ title: Диаграммы LikeC4
 
 - Гайд по деплою LikeC4: https://likec4.dev/guides/deploy-github-pages/
 
-<div style="height:70vh">
-  <iframe src="./" title="LikeC4" style="width:100%; height:100%; border:0"></iframe>
-  
-  
-</div>
+{{ likec4_iframe('') }}
 
 ## Диаграмма из ADR (временно на Mermaid)
 
