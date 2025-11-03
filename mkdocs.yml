@@ -37,12 +37,19 @@ markdown_extensions:
       permalink: true
   - pymdownx.highlight
   - pymdownx.inlinehilite
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
   - pymdownx.details
 
 nav:
   - Введение: index.md
   - ADR: adr.md
   - Диаграммы (LikeC4): likec4/index.md
+
+extra_javascript:
+  - https://unpkg.com/mermaid@10/dist/mermaid.min.js
+  - _assets/mermaid-init.js
 
 
