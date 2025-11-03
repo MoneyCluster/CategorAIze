@@ -1,0 +1,27 @@
+// CategorAIze ADR-based architecture (LikeC4 minimal)
+
+model CategorAIze {
+  system api "API Layer (FastAPI)"
+  system embedding "Embedding Service"
+  system classifier "User Classifier Service"
+  system feedback "Feedback Loop"
+  systemDb storage "Storage"
+
+  relationship api -> embedding "Embed text"
+  relationship api -> classifier "Predict category"
+  relationship api -> feedback "Send user feedback"
+  relationship classifier -> storage "Read/Write models"
+  relationship feedback -> storage "Append training data"
+  relationship embedding -> classifier "Embeddings"
+
+  view Landscape {
+    include *
+    layout lr
+    style {
+      api, embedding, classifier, feedback { color: #3166d9; }
+      storage { color: #997404; }
+    }
+  }
+}
+
+
