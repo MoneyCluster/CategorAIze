@@ -104,6 +104,8 @@ sidebar_label: ADR
 
 ## **Architecture Overview (LikeC4 DSL)**
 
+{{ likec4_view('CategorAIze', 'landscape') }}
+
 ---
 
 ## **Technology Stack**
