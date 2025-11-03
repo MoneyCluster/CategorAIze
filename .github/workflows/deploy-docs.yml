@@ -43,7 +43,9 @@ jobs:
       - name: Build LikeC4 (optional)
         run: |
           if command -v npx >/dev/null 2>&1; then
-            npx --yes likec4@latest build --config docs/_likec4/likec4.config.ts --base "${{ steps.pages.outputs.base_path }}/_static/likec4" --output dist-likec4 || true
+            # Remove site/_likec4 if exists to prevent duplicate projects
+            rm -rf site/_likec4 || true
+            npx --yes likec4@latest build --config docs/_likec4/likec4.config.ts --base "${{ steps.pages.outputs.base_path }}/_static/likec4" --use-hash-history --output dist-likec4 || true
             if [ -d dist-likec4 ]; then
               rm -rf docs/_static/likec4
               mkdir -p docs/_static/likec4

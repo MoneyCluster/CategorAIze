@@ -13,8 +13,8 @@ if [ -d "site/_likec4" ]; then
   rm -rf site/_likec4
 fi
 
-echo "🔨 Building LikeC4 diagrams (with base=/CategorAIze/_static/likec4)..."
-npx --yes likec4@latest build --config docs/_likec4/likec4.config.ts --base "/CategorAIze/_static/likec4" --output dist-likec4
+echo "🔨 Building LikeC4 diagrams (with base=/CategorAIze/_static/likec4, hash-history)..."
+npx --yes likec4@latest build --config docs/_likec4/likec4.config.ts --base "/CategorAIze/_static/likec4" --use-hash-history --output dist-likec4
 
 echo "📦 Copying artifacts to docs/_static/likec4..."
 rm -rf docs/_static/likec4

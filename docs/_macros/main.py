@@ -52,7 +52,9 @@ def define_env(env):
         else:
             src = f"{base.rstrip('/')}/index.html"
         
-        hash_route = f"project/{project}/views/{view}"
+        # With --use-hash-history, LikeC4 uses hash-based routing: #/view/{viewName}/
+        # Format is different from non-hash mode
+        hash_route = f"/view/{view}/"
         iframe_id = f"likec4-{project}-{view}".replace(" ", "-").lower()
         return (
             f'<div style="height:{height}">\n'
