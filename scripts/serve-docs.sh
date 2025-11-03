@@ -48,14 +48,15 @@ if [ ! -f "mkdocs.yml" ]; then
   exit 1
 fi
 
-# Build LikeC4 (optional)
+# Build LikeC4 (required unless --skip-likec4 is set)
 if [ "${SKIP_LIKEC4}" != "1" ]; then
-  if command -v npx >/dev/null 2>&1; then
-    echo "🔨 Building LikeC4 diagrams... (set SKIP_LIKEC4=1 to skip)"
-    ./scripts/build-likec4.sh || echo "⚠️ LikeC4 build failed — continuing with existing static assets"
-  else
-    echo "ℹ️ Node.js/npx not found. Skipping LikeC4 build. Set SKIP_LIKEC4=1 to silence."
+  if ! command -v npx >/dev/null 2>&1 || ! command -v node >/dev/null 2>&1; then
+    echo "❌ Node.js/npx not found. Node.js is required to build LikeC4 diagrams."
+    echo "   Install Node.js (>=20) or use --skip-likec4 to skip LikeC4 build."
+    exit 1
   fi
+  echo "🔨 Building LikeC4 diagrams... (set SKIP_LIKEC4=1 to skip)"
+  ./scripts/build-likec4.sh || echo "⚠️ LikeC4 build failed — continuing with existing static assets"
 fi
 
 ## No separate SPA server: use MkDocs-served static assets
@@ -64,10 +65,22 @@ fi
 if ! command -v mkdocs >/dev/null 2>&1; then
   echo "ℹ️ 'mkdocs' CLI not found; trying 'python3 -m mkdocs'"
   if ! python3 -c "import mkdocs" >/dev/null 2>&1; then
-    echo "📦 Installing MkDocs and plugins (mkdocs-material, macros, include-markdown)"
+    echo "📦 Installing MkDocs and plugins (mkdocs-material, macros, include-markdown, plantuml)"
     python3 -m pip install --upgrade pip >/dev/null
-    python3 -m pip install mkdocs-material mkdocs-macros-plugin mkdocs-include-markdown-plugin >/dev/null
+    python3 -m pip install mkdocs-material mkdocs-macros-plugin mkdocs-include-markdown-plugin mkdocs_puml >/dev/null
   fi
+fi
+
+# Ensure plantuml plugin is installed
+if ! python3 -c "import mkdocs_puml" >/dev/null 2>&1; then
+  echo "📦 Installing plantuml plugin (mkdocs_puml)..."
+  python3 -m pip install mkdocs_puml >/dev/null
+fi
+
+# Ensure custom escape-macros plugin is installed
+if ! python3 -c "import mkdocs.plugins; from mkdocs_plugins import EscapeMacrosInCodePlugin" >/dev/null 2>&1; then
+  echo "📦 Installing custom escape-macros plugin..."
+  python3 -m pip install -e . >/dev/null 2>&1
 fi
 
 echo "🚀 Starting MkDocs on http://${ADDR}/"
