@@ -40,6 +40,12 @@ specification {
             color amber
         }
     }
+    element application {
+        notation "Application"
+        style {
+            color primary
+        }
+    }
     element system
     element systemDb
 }

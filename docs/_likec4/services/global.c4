@@ -1,24 +1,26 @@
 model {
-    user = user 'User' {
-        description 'User interacting with the system'
-    }
+    system_context = application 'System Context' {
+        user = user 'User' {
+            description 'User interacting with the system'
+        }
 
-    web = web 'Web Interface' {
-        description 'Web application for user interaction'
-    }
+        web = web 'Web Interface' {
+            description 'Web application for user interaction'
+        }
 
-    mobile = mobile 'Mobile App' {
-        description 'Mobile application for user interaction'
-    }
+        mobile = mobile 'Mobile App' {
+            description 'Mobile application for user interaction'
+        }
 
-    user -> web 'Uses'
-    user -> mobile 'Uses'
+        user -> web 'Uses'
+        user -> mobile 'Uses'
+    }
 }
 
 views {
     view systemContext {
         title "System Context"
         description "High-level view of the system and its external dependencies"
-        include *
+        include system_context.*
     }
 }
