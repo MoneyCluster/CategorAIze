@@ -15,12 +15,11 @@ theme:
     - navigation.instant
     - navigation.tracking
     - navigation.sections
-    - navigation.expand
     - navigation.top
     - content.code.copy
     - content.action.edit
-  nav:
-    collapse_single_sections: false
+  icon:
+    repo: fontawesome/brands/git-alt
   palette:
     - media: '(prefers-color-scheme: light)'
       scheme: default
@@ -56,11 +55,12 @@ plugins:
 
 nav:
   - Введение: index.md
-  - ADR:
-      - Обзор: adr/index.md
-      - "ADR-001: Персонализированная классификация": adr/001-personalized-classification.md
   - Руководства:
       - Работа с документацией: guides/documentation.md
+  - Архитектурные решения (ADR):
+      - Обзор: adr/index.md
+      - adr/001-personalized-classification.md
+
 
 extra_javascript:
   - https://unpkg.com/mermaid@10/dist/mermaid.min.js
