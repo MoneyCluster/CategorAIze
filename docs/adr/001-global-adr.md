@@ -336,107 +336,11 @@ sidebar_label: ADR-001
 Полная схема:
 ![ERD Global Full](../data/images/moneycluster_erd_global_full.svg)
 
-## **System Architecture (UML)**
+## **System Architecture**
 
 ### Component Diagram
 
-```plantuml
-@startuml
-!theme plain
-skinparam componentStyle rectangle
-skinparam backgroundColor #FFFFFF
-
-package "Frontend Layer" {
-  component [Web Application] as Web
-  component [Mobile App] as Mobile
-}
-
-package "API Layer" {
-  package "FastAPI Gateway" {
-    component [Receipt Upload Endpoint] as ReceiptUpload
-    component [Transaction Endpoint] as TransEndpoint
-    component [Account Endpoint] as AccountEndpoint
-    component [Category Endpoint] as CategoryEndpoint
-    component [Predict Endpoint] as PredictEndpoint
-    component [Feedback Endpoint] as FeedbackEndpoint
-  }
-  component [FastAPI Gateway] as API
-}
-
-package "Business Logic Layer" {
-  component [Receipt Service] as ReceiptService
-  component [OCR Service] as OCRService
-  component [Transaction Service] as TransService
-  component [Transaction Group Service] as TransGroupService
-  component [Account Service] as AccountService
-  component [Category Service] as CatService
-  component [Store Service] as StoreService
-  component [Tag Service] as TagService
-  component [Model Service] as ModelService
-  component [Feedback Loop Service] as FeedbackService
-}
-
-package "ML Services Layer" {
-  component [Embedding Service] as Embedding
-  note right of Embedding : Общая модель эмбеддингов\n(sentence-transformers)\nall-MiniLM-L6-v2
-  component [User Classifier Service] as Classifier
-  note right of Classifier : Персональный классификатор\n(scikit-learn)\nдля каждого пользователя
-  component [Training Scheduler] as Scheduler
-}
-
-package "Data Layer" {
-  database "PostgreSQL" as DB
-  storage "Model Storage (S3/Local)" as ModelStorage
-  storage "File Storage (S3/Local)" as FileStorage
-}
-
-' Frontend connections
-Web --> API : HTTPS/REST
-Mobile --> API : HTTPS/REST
-
-' API to Business Logic
-ReceiptUpload --> ReceiptService
-TransEndpoint --> TransService
-AccountEndpoint --> AccountService
-CategoryEndpoint --> CatService
-PredictEndpoint --> ModelService
-FeedbackEndpoint --> FeedbackService
-
-' Business Logic connections
-ReceiptService --> OCRService : process_receipt(file)
-ReceiptService --> StoreService : identify_store(data)
-ReceiptService --> TransGroupService : create_group(receipt_data)
-TransService --> TransGroupService : group_transactions()
-TransService --> AccountService : update_balance()
-AccountService --> TransService : get_account_transactions()
-TransService --> TagService : manage_tags()
-ModelService --> Embedding : get_embedding(text)
-ModelService --> Classifier : predict(embedding)
-ModelService --> Classifier : train(user_data)
-FeedbackService --> ModelService : trigger_retraining()
-Scheduler --> ModelService : periodic_retraining()
-
-' Business Logic to Data Layer
-ReceiptService --> DB : CRUD receipts
-ReceiptService --> FileStorage : save receipt files
-OCRService --> DB : update receipt OCR data
-TransService --> DB : CRUD transactions
-TransGroupService --> DB : CRUD transaction_groups
-AccountService --> DB : CRUD accounts, update balance
-CatService --> DB : CRUD categories
-StoreService --> DB : CRUD stores
-TagService --> DB : CRUD tags, transaction_tags
-ModelService --> DB : read training_data
-ModelService --> ModelStorage : save/load models
-FeedbackService --> DB : save feedback_events
-
-' ML Services to Data Layer
-Classifier --> Embedding : use embeddings
-Classifier --> ModelStorage : load/save model
-Classifier --> DB : read training_data
-
-@enduml
-```
+{{ likec4_view('CategorAIze', 'componentArchitecture') }}
 
 ### Sequence Diagram: Receipt Upload and Processing Flow
 
@@ -582,11 +486,11 @@ deactivate Embedding
 ModelSvc -> Storage: load_user_model(user_id)
 activate Storage
 alt Model exists
-  Storage --> ModelSvc: user_classifier_model
-  ModelSvc -> Classifier: predict(embedding, model)
-  activate Classifier
-  Classifier --> ModelSvc: {category_id, confidence}
-  deactivate Classifier
+Storage --> ModelSvc: user_classifier_model
+ModelSvc -> Classifier: predict(embedding, model)
+activate Classifier
+Classifier --> ModelSvc: {category_id, confidence}
+deactivate Classifier
 else No model yet
   ModelSvc --> TransSvc: null
 end
@@ -946,112 +850,5 @@ end note
 
 ### Deployment Diagram: System Infrastructure
 
-```plantuml
-@startuml
-!theme plain
-skinparam backgroundColor #FFFFFF
-
-node "Client Devices" {
-  [Web Browser] as Browser
-  [Mobile App] as MobileApp
-}
-
-cloud "CDN / Load Balancer" as CDN
-
-node "Web Server" {
-  [Web Application\n(React/Vue)] as WebApp
-  [Static Assets] as Static
-}
-
-node "API Server" {
-  [FastAPI Application] as FastAPI
-  [Uvicorn ASGI Server] as Uvicorn
-}
-
-node "ML Services Cluster" {
-  [Embedding Service\n(Single Instance)] as EmbedSvc
-  [Classifier Service\n(Multiple Instances)] as ClassifierSvc1
-  [Classifier Service\n(Multiple Instances)] as ClassifierSvc2
-}
-
-node "Processing Services" {
-  [OCR Service\n(Multiple Instances)] as OCRSvc1
-  [OCR Service\n(Multiple Instances)] as OCRSvc2
-  [Receipt Processing Queue] as ReceiptQueue
-}
-
-node "Database Server" {
-  database "PostgreSQL" as PG {
-    [User Data]
-    [Account Data]
-    [Transaction Data]
-    [Category Data]
-    [Receipt Data]
-    [Store Data]
-    [Tag Data]
-    [Training Data]
-    [Model Metadata]
-  }
-}
-
-node "Storage Cluster" {
-  storage "Model Storage\n(S3/Local FS)" as ModelStorage {
-    [User Models\n(joblib/pickle)]
-  }
-  storage "File Storage\n(S3/Local FS)" as FileStorage {
-    [Receipt Images]
-    [Receipt PDFs]
-  }
-}
-
-node "Background Workers" {
-  [Training Scheduler] as TrainScheduler
-  [Receipt Processor] as ReceiptProcessor
-  [Retraining Queue] as TrainQueue
-}
-
-Browser --> CDN : HTTPS
-MobileApp --> CDN : HTTPS
-CDN --> WebApp : HTTP
-WebApp --> FastAPI : REST API
-
-FastAPI --> EmbedSvc : gRPC / HTTP
-FastAPI --> ClassifierSvc1 : gRPC / HTTP
-FastAPI --> ClassifierSvc2 : gRPC / HTTP
-FastAPI --> PG : SQL
-FastAPI --> ReceiptQueue : Queue receipt processing
-
-ReceiptQueue --> OCRSvc1 : OCR tasks
-ReceiptQueue --> OCRSvc2 : OCR tasks
-OCRSvc1 --> FileStorage : Read receipt files
-OCRSvc2 --> FileStorage : Read receipt files
-
-ClassifierSvc1 --> ModelStorage : Read/Write models
-ClassifierSvc2 --> ModelStorage : Read/Write models
-
-TrainScheduler --> FastAPI : Trigger retraining
-TrainScheduler --> TrainQueue : Queue training jobs
-TrainQueue --> ClassifierSvc1 : Training tasks
-TrainQueue --> ClassifierSvc2 : Training tasks
-
-ReceiptProcessor --> ReceiptQueue : Process receipts
-ReceiptProcessor --> FastAPI : Update receipt status
-
-note right of EmbedSvc
-  Общая модель эмбеддингов
-  для всех пользователей
-end note
-
-note right of ClassifierSvc1
-  Персональные классификаторы
-  масштабируются горизонтально
-end note
-
-note right of OCRSvc1
-  OCR сервисы для обработки
-  чеков в фоновом режиме
-end note
-
-@enduml
-```
+{{ likec4_view('CategorAIze', 'deploymentInfrastructure') }}
 

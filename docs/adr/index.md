@@ -40,7 +40,7 @@ ADR помогают:
 
 ## Формат ADR
 
-Каждый ADR содержит:
+Каждый ADR может содержать:
 
 - **Status** — текущий статус (Proposed, Accepted, Deprecated, Superseded)
 - **Date** — дата создания
