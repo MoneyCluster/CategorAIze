@@ -1,0 +1,45 @@
+specification {
+    element user {
+        notation "Person, User"
+        style {
+            shape person
+            color indigo
+        }
+    }
+    element api {
+        notation "API Endpoint"
+        style {
+            color blue
+        }
+    }
+    element web {
+        notation "Web Interface"
+        style {
+            shape browser
+            color blue
+        }
+    }
+    element mobile {
+        notation "Mobile App"
+        style {
+            shape mobile
+            color blue
+        }
+    }
+    element database {
+        notation "Database"
+        style {
+            shape cylinder
+            color red
+        }
+    }
+    element storage {
+        notation "Storage System"
+        style {
+            shape storage
+            color amber
+        }
+    }
+    element system
+    element systemDb
+}

@@ -4,7 +4,9 @@ sidebar_label: ADR-001
 ---
 
 **Status:** Accepted
+
 **Date:** 2025-11-01
+
 **Version:** 1.0
 
 ---

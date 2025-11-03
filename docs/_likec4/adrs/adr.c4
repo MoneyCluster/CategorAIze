@@ -1,9 +1,3 @@
-specification {
-  // use built-in kinds; declare aliases for clarity if needed
-  element system
-  element systemDb
-}
-
 model {
   system api "API Layer (FastAPI)"
   system embedding "Embedding Service"

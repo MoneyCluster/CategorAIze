@@ -59,7 +59,8 @@ nav:
       - Работа с документацией: guides/documentation.md
   - Архитектурные решения (ADR):
       - Обзор: adr/index.md
-      - adr/001-personalized-classification.md
+      - adr/001-globa-adr.md
+      - adr/002-personalized-classification.md
 
 
 extra_javascript:
