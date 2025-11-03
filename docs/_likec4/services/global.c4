@@ -1,7 +1,7 @@
 model {
     system_context = application 'System Context' {
         user = user 'User' {
-            description 'User interacting with the system'
+            description 'User interacting with the financial tracking system'
         }
 
         web = web 'Web Interface' {
@@ -14,6 +14,39 @@ model {
 
         user -> web 'Uses'
         user -> mobile 'Uses'
+        backend_system = application 'Backend System' {
+            api = api 'API Layer (FastAPI)' {
+                description 'REST API endpoints: /upload, /predict, /feedback, /train'
+            }
+
+            embedding_service = system 'Embedding Service' {
+                description 'Common LLM model for text embeddings (sentence-transformers)'
+            }
+
+            classifier_service = system 'User Classifier Service' {
+                description 'Personalized ML classifier for each user (scikit-learn)'
+            }
+
+            feedback_loop = system 'Feedback Loop' {
+                description 'Handles user corrections and triggers model retraining'
+            }
+
+            storage = storage 'Storage' {
+                description 'SQLite/PostgreSQL for transactions, S3 for ML models'
+            }
+
+            web -> api 'API calls'
+            mobile -> api 'API calls'
+            
+            api -> embedding_service 'Get embeddings'
+            api -> classifier_service 'Predict category'
+            api -> feedback_loop 'Submit feedback'
+            
+            classifier_service -> storage 'Read/Write models'
+            classifier_service -> embedding_service 'Use embeddings'
+            feedback_loop -> storage 'Append training data'
+            api -> storage 'Store transactions'
+        }
     }
 }
 
@@ -21,6 +54,19 @@ views {
     view systemContext {
         title "System Context"
         description "High-level view of the system and its external dependencies"
+        include system_context.**
+    }
+
+    view backendArchitecture {
+        title "Backend Architecture"
+        description "Detailed view of backend components and data flow"
+        include backend_system.*
+    }
+
+    view globalLandscape {
+        title "Global System Landscape"
+        description "Complete system view including user interfaces and backend services"
         include system_context.*
+        include backend_system.*
     }
 }

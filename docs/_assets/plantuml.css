@@ -1,0 +1,27 @@
+/* PlantUML diagram styles */
+.plantuml-diagram {
+  margin: 1.5em 0;
+  text-align: center;
+}
+
+.plantuml-diagram img {
+  max-width: 100%;
+  height: auto;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Dark mode support */
+[data-md-color-scheme="slate"] .plantuml-diagram img {
+  border-color: #424242;
+  background: #1e1e1e;
+}
+
+.plantuml-loading {
+  padding: 2em;
+  color: #666;
+  font-style: italic;
+}
+
