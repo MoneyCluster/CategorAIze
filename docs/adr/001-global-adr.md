@@ -151,7 +151,7 @@ sidebar_label: ADR-001
 
 ---
 
-![ERD Global](./data/images/moneycluster_erd_global.svg)
+![ERD Global](../data/images/moneycluster_erd_global.svg)
 
 
 ## **System Architecture (UML)**
