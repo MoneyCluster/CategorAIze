@@ -7,6 +7,12 @@ if ! command -v npx >/dev/null 2>&1; then
   exit 1
 fi
 
+# Remove site/_likec4 if exists to prevent LikeC4 from finding duplicate project
+if [ -d "site/_likec4" ]; then
+  echo "🧹 Removing site/_likec4 to avoid duplicate projects..."
+  rm -rf site/_likec4
+fi
+
 echo "🔨 Building LikeC4 diagrams (with base=/CategorAIze/_static/likec4)..."
 npx --yes likec4@latest build --config docs/_likec4/likec4.config.ts --base "/CategorAIze/_static/likec4" --output dist-likec4
 
