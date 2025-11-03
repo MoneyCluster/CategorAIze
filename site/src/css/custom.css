@@ -1,0 +1,16 @@
+:root {
+  --ifm-color-primary: #3166d9;
+  --ifm-color-primary-dark: #2959bf;
+  --ifm-color-primary-darker: #254fb0;
+  --ifm-color-primary-darkest: #1d3e8a;
+  --ifm-color-primary-light: #3f75e8;
+  --ifm-color-primary-lighter: #5585ec;
+  --ifm-color-primary-lightest: #7aa2f3;
+}
+
+/* Code blocks font size a bit smaller */
+.theme-code-block {
+  font-size: 0.9rem;
+}
+
+
