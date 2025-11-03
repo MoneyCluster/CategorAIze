@@ -21,8 +21,8 @@ flowchart LR
   A[API Layer (FastAPI)] --> E[Embedding Service]
   A --> U[User Classifier Service]
   A --> F[Feedback Loop]
-  U -->|reads/writes| S[(Storage)]
-  F -->|append training data| S
+  U --|reads/writes|--> S[(Storage)]
+  F --|append training data|--> S
   E --> U
   classDef svc fill:#e5f0ff,stroke:#3166d9,stroke-width:1px,color:#000
   class A,E,U,F svc
