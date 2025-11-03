@@ -2,8 +2,8 @@
 # Скрипт для локальной сборки LikeC4 диаграмм
 set -euo pipefail
 
-if ! command -v npx >/dev/null 2>&1; then
-  echo "❌ npx not found. Install Node.js (>=20) to build LikeC4."
+if ! command -v npx >/dev/null 2>&1 || ! command -v node >/dev/null 2>&1; then
+  echo "❌ Node.js/npx not found. Install Node.js (>=20) to build LikeC4."
   exit 1
 fi
 
