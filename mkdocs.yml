@@ -1,0 +1,48 @@
+site_name: CategorAIze Docs
+site_description: Documentation for CategorAIze
+site_url: https://<org>.github.io/CategorAIze/
+
+repo_name: <org>/CategorAIze
+repo_url: https://github.com/<org>/CategorAIze
+edit_uri: edit/main/docs/
+
+docs_dir: docs
+
+theme:
+  name: material
+  language: ru
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - content.action.edit
+  palette:
+    - media: '(prefers-color-scheme: light)'
+      scheme: default
+      primary: indigo
+      accent: indigo
+    - media: '(prefers-color-scheme: dark)'
+      scheme: slate
+      primary: indigo
+      accent: indigo
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - toc:
+      permalink: true
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - pymdownx.details
+
+nav:
+  - Введение: index.md
+  - ADR: adr.md
+  - Диаграммы (LikeC4): likec4/index.md
+
+
