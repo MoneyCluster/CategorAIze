@@ -15,9 +15,12 @@ theme:
     - navigation.instant
     - navigation.tracking
     - navigation.sections
+    - navigation.expand
     - navigation.top
     - content.code.copy
     - content.action.edit
+  nav:
+    collapse_single_sections: false
   palette:
     - media: '(prefers-color-scheme: light)'
       scheme: default
@@ -53,11 +56,11 @@ plugins:
 
 nav:
   - Введение: index.md
+  - ADR:
+      - Обзор: adr/index.md
+      - "ADR-001: Персонализированная классификация": adr/001-personalized-classification.md
   - Руководства:
-      - Локальная разработка: guides/local-setup.md
-      - Стиль документации: guides/style.md
-      - Как вносить изменения: guides/contributing.md
-  - ADR: adr.md
+      - Работа с документацией: guides/documentation.md
 
 extra_javascript:
   - https://unpkg.com/mermaid@10/dist/mermaid.min.js

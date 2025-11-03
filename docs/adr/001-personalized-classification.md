@@ -1,13 +1,10 @@
 ---
-id: adr
-title: Architecture Decision Records
-sidebar_label: ADR
+title: ADR-001: Персонализированная классификация трат пользователей
+sidebar_label: ADR-001
 ---
 
-# ADR-001: Персонализированная классификация трат пользователей
-
-**Status:** Accepted
-**Date:** 2025-11-01
+**Status:** Accepted  
+**Date:** 2025-11-01  
 **Version:** 1.0
 
 ---
@@ -199,3 +196,4 @@ sidebar_label: ADR
 2. **Federated Learning:** агрегировать пользовательские модели для общей инициализации.
 3. **Streaming retraining:** обновлять классификатор инкрементально, без полного переобучения.
 4. **Vector DB:** хранить эмбеддинги в FAISS / Milvus для быстрого поиска похожих транзакций.
+
