@@ -1,0 +1,301 @@
+model {
+    component_diagram = application 'Component Architecture' {
+        frontend_layer = application 'Frontend Layer' {
+            web_app = web 'Web Application' {
+                description 'Web application (React/Vue) for user interaction'
+            }
+            
+            mobile_app = mobile 'Mobile App' {
+                description 'Mobile application for user interaction'
+            }
+        }
+
+        api_layer = application 'API Layer' {
+            api_gateway = api 'FastAPI Gateway' {
+                description 'REST API gateway with multiple endpoints'
+                
+                receipt_upload = api 'Receipt Upload Endpoint' {
+                    description 'POST /receipts/upload'
+                }
+                
+                transaction_endpoint = api 'Transaction Endpoint' {
+                    description 'POST /transactions, GET /transactions'
+                }
+                
+                account_endpoint = api 'Account Endpoint' {
+                    description 'GET /accounts, GET /accounts/{id}/balance'
+                }
+                
+                category_endpoint = api 'Category Endpoint' {
+                    description 'CRUD operations for categories'
+                }
+                
+                predict_endpoint = api 'Predict Endpoint' {
+                    description 'POST /predict - Category prediction'
+                }
+                
+                feedback_endpoint = api 'Feedback Endpoint' {
+                    description 'POST /feedback - User feedback for ML'
+                }
+            }
+        }
+
+        business_logic = application 'Business Logic Layer' {
+            receipt_service = system 'Receipt Service' {
+                description 'Handles receipt upload, storage, and processing workflow'
+            }
+            
+            ocr_service = system 'OCR Service' {
+                description 'Extracts text and data from receipt images using OCR'
+            }
+            
+            transaction_service = system 'Transaction Service' {
+                description 'Manages transactions: create, update, delete, query'
+            }
+            
+            transaction_group_service = system 'Transaction Group Service' {
+                description 'Manages groups of transactions (e.g., from single receipt)'
+            }
+            
+            account_service = system 'Account Service' {
+                description 'Manages accounts and calculates balances'
+            }
+            
+            category_service = system 'Category Service' {
+                description 'Manages user categories (CRUD operations)'
+            }
+            
+            store_service = system 'Store Service' {
+                description 'Manages stores/merchants from receipts'
+            }
+            
+            tag_service = system 'Tag Service' {
+                description 'Manages tags and transaction tagging'
+            }
+            
+            model_service = system 'Model Service' {
+                description 'ML model management and prediction service'
+            }
+            
+            feedback_service = system 'Feedback Loop Service' {
+                description 'Handles user feedback and triggers model retraining'
+            }
+        }
+
+        ml_services = application 'ML Services Layer' {
+            embedding_service = system 'Embedding Service' {
+                description 'Common embedding model (sentence-transformers/all-MiniLM-L6-v2)\nConverts text descriptions to 384-dim vectors'
+            }
+            
+            classifier_service = system 'User Classifier Service' {
+                description 'Personalized classifier for each user (scikit-learn)\nPredicts category from embedding'
+            }
+            
+            training_scheduler = system 'Training Scheduler' {
+                description 'Schedules periodic model retraining'
+            }
+        }
+
+        data_layer = application 'Data Layer' {
+            database = database 'PostgreSQL' {
+                description 'Main database: users, accounts, transactions, categories, receipts, stores, tags, training data, models metadata'
+            }
+            
+            model_storage = storage 'Model Storage' {
+                description 'S3/Local FS for ML models (joblib/pickle files)'
+            }
+            
+            file_storage = storage 'File Storage' {
+                description 'S3/Local FS for receipt files (images, PDFs)'
+            }
+        }
+
+        // Frontend to API
+        web_app -> api_gateway 'HTTPS/REST'
+        mobile_app -> api_gateway 'HTTPS/REST'
+
+        // API to Business Logic
+        receipt_upload -> receipt_service
+        transaction_endpoint -> transaction_service
+        account_endpoint -> account_service
+        category_endpoint -> category_service
+        predict_endpoint -> model_service
+        feedback_endpoint -> feedback_service
+
+        // Business Logic connections
+        receipt_service -> ocr_service 'process_receipt(file)'
+        receipt_service -> store_service 'identify_store(data)'
+        receipt_service -> transaction_group_service 'create_group(receipt_data)'
+        transaction_service -> transaction_group_service 'group_transactions()'
+        transaction_service -> account_service 'update_balance()'
+        account_service -> transaction_service 'get_account_transactions()'
+        transaction_service -> tag_service 'manage_tags()'
+        model_service -> embedding_service 'get_embedding(text)'
+        model_service -> classifier_service 'predict(embedding), train(user_data)'
+        feedback_service -> model_service 'trigger_retraining()'
+        training_scheduler -> model_service 'periodic_retraining()'
+
+        // Business Logic to Data Layer
+        receipt_service -> database 'CRUD receipts'
+        receipt_service -> file_storage 'save receipt files'
+        ocr_service -> database 'update receipt OCR data'
+        transaction_service -> database 'CRUD transactions'
+        transaction_group_service -> database 'CRUD transaction_groups'
+        account_service -> database 'CRUD accounts, update balance'
+        category_service -> database 'CRUD categories'
+        store_service -> database 'CRUD stores'
+        tag_service -> database 'CRUD tags, transaction_tags'
+        model_service -> database 'read training_data'
+        model_service -> model_storage 'save/load models'
+        feedback_service -> database 'save feedback_events'
+
+        // ML Services to Data Layer
+        classifier_service -> embedding_service 'use embeddings'
+        classifier_service -> model_storage 'load/save model'
+        classifier_service -> database 'read training_data'
+    }
+
+    deployment_diagram = application 'Deployment Infrastructure' {
+        client_devices = application 'Client Devices' {
+            web_browser = web 'Web Browser' {
+                description 'User web browser'
+            }
+            
+            mobile_app = mobile 'Mobile App' {
+                description 'User mobile application'
+            }
+        }
+
+        cdn = system 'CDN / Load Balancer' {
+            description 'Content delivery network and load balancing'
+        }
+
+        web_server = application 'Web Server' {
+            web_application = web 'Web Application' {
+                description 'React/Vue application'
+            }
+            
+            static_assets = storage 'Static Assets' {
+                description 'Static files (JS, CSS, images)'
+            }
+        }
+
+        api_server = application 'API Server' {
+            fastapi = api 'FastAPI Application' {
+                description 'Main API application'
+            }
+            
+            uvicorn = system 'Uvicorn ASGI Server' {
+                description 'ASGI server for FastAPI'
+            }
+        }
+
+        ml_cluster = application 'ML Services Cluster' {
+            embedding_service = system 'Embedding Service' {
+                description 'Single instance - Common embedding model for all users'
+            }
+            
+            classifier_service_1 = system 'Classifier Service' {
+                description 'Instance 1 - Personal classifiers (scalable)'
+            }
+            
+            classifier_service_2 = system 'Classifier Service' {
+                description 'Instance 2 - Personal classifiers (scalable)'
+            }
+        }
+
+        processing_services = application 'Processing Services' {
+            ocr_service_1 = system 'OCR Service' {
+                description 'Instance 1 - Receipt OCR processing'
+            }
+            
+            ocr_service_2 = system 'OCR Service' {
+                description 'Instance 2 - Receipt OCR processing'
+            }
+            
+            receipt_queue = system 'Receipt Processing Queue' {
+                description 'Queue for receipt processing tasks'
+            }
+        }
+
+        database_server = application 'Database Server' {
+            postgresql = database 'PostgreSQL' {
+                description 'Main database with all tables'
+            }
+        }
+
+        storage_cluster = application 'Storage Cluster' {
+            model_storage = storage 'Model Storage' {
+                description 'S3/Local FS - User ML models (joblib/pickle)'
+            }
+            
+            file_storage = storage 'File Storage' {
+                description 'S3/Local FS - Receipt images and PDFs'
+            }
+        }
+
+        background_workers = application 'Background Workers' {
+            training_scheduler = system 'Training Scheduler' {
+                description 'Schedules periodic model retraining'
+            }
+            
+            receipt_processor = system 'Receipt Processor' {
+                description 'Processes receipts from queue'
+            }
+            
+            retraining_queue = system 'Retraining Queue' {
+                description 'Queue for model training tasks'
+            }
+        }
+
+        // Client connections
+        web_browser -> cdn 'HTTPS'
+        mobile_app -> cdn 'HTTPS'
+        cdn -> web_application 'HTTP'
+        web_application -> fastapi 'REST API'
+
+        // API to ML Services
+        fastapi -> embedding_service 'gRPC / HTTP'
+        fastapi -> classifier_service_1 'gRPC / HTTP'
+        fastapi -> classifier_service_2 'gRPC / HTTP'
+        
+        // API to Processing
+        fastapi -> receipt_queue 'Queue receipt processing'
+        
+        // API to Data
+        fastapi -> postgresql 'SQL'
+
+        // Processing Services
+        receipt_queue -> ocr_service_1 'OCR tasks'
+        receipt_queue -> ocr_service_2 'OCR tasks'
+        ocr_service_1 -> file_storage 'Read receipt files'
+        ocr_service_2 -> file_storage 'Read receipt files'
+        receipt_processor -> receipt_queue 'Process receipts'
+        receipt_processor -> fastapi 'Update receipt status'
+
+        // ML Services to Storage
+        classifier_service_1 -> model_storage 'Read/Write models'
+        classifier_service_2 -> model_storage 'Read/Write models'
+
+        // Background Workers
+        training_scheduler -> fastapi 'Trigger retraining'
+        training_scheduler -> retraining_queue 'Queue training jobs'
+        retraining_queue -> classifier_service_1 'Training tasks'
+        retraining_queue -> classifier_service_2 'Training tasks'
+    }
+}
+
+views {
+    view componentArchitecture {
+        title "Component Architecture"
+        description "Component diagram showing all services and their relationships"
+        include component_diagram.**
+    }
+
+    view deploymentInfrastructure {
+        title "Deployment Infrastructure"
+        description "System deployment diagram showing infrastructure components"
+        include deployment_diagram.**
+    }
+}
+
