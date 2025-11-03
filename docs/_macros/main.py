@@ -1,4 +1,36 @@
 def define_env(env):
+    # Escape macros inside code blocks before macro expansion
+    # Note: mkdocs-macros processes macros BEFORE markdown parsing,
+    # so we need to escape {{ }} in code blocks manually
+    import re
+    
+    def escape_macros_in_code_blocks(text: str) -> str:
+        """
+        Escape {{ }} patterns inside code blocks (``` blocks) before macro processing.
+        This prevents macros from being processed when they appear as examples.
+        """
+        # Pattern to match fenced code blocks (```...```)
+        # Match from opening ``` to closing ```, handling language tag and content
+        code_block_pattern = r'(```[^\n]*\n[\s\S]*?```)'
+        
+        def escape_in_block(match):
+            code_block = match.group(1)
+            # Escape all {{ and }} inside the code block to HTML entities
+            escaped = code_block.replace('{{', '&#123;&#123;').replace('}}', '&#125;&#125;')
+            return escaped
+        
+        # Process all code blocks
+        return re.sub(code_block_pattern, escape_in_block, text)
+    
+    # Store the function - we'll need to call it via a custom MkDocs plugin hook
+    # For now, we register it as a variable so it can be used if needed
+    if hasattr(env, 'variables'):
+        env.variables['_escape_code_blocks'] = escape_macros_in_code_blocks
+    
+    # Note: mkdocs-macros doesn't have a built-in preprocessor hook that runs
+    # before macro expansion for code blocks. The best approach is to manually
+    # escape {{ }} in documentation examples (as we do in contributing.md)
+    
     def _rel_root(page_url: str) -> str:
         if not page_url:
             return ""
