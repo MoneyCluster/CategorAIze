@@ -43,6 +43,10 @@ markdown_extensions:
       custom_fences:
         - name: mermaid
           class: mermaid
+        - name: plantuml
+          class: plantuml
+        - name: puml
+          class: plantuml
   - pymdownx.details
 
 plugins:
@@ -52,6 +56,11 @@ plugins:
       modules:
         - docs._macros.main
   - include-markdown
+  - plantuml:
+      puml_url: https://www.plantuml.com/plantuml/
+      puml_keyword: plantuml
+      theme:
+        enabled: false
 
 nav:
   - Введение: index.md
@@ -59,7 +68,7 @@ nav:
       - Работа с документацией: guides/documentation.md
   - Архитектурные решения (ADR):
       - Обзор: adr/index.md
-      - adr/001-globa-adr.md
+      - adr/001-global-adr.md
       - adr/002-personalized-classification.md
 
 
@@ -68,4 +77,5 @@ extra_javascript:
   - _assets/mermaid-init.js
   - _static/likec4/likec4-views.js
 
-
+extra_css:
+  - _assets/plantuml.css
