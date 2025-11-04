@@ -61,13 +61,22 @@ jobs:
 
     - name: Commit coverage badge
       if: matrix.python-version == '3.11' && github.event_name == 'push'
-      uses: stefanzweifel/git-auto-commit-action@v5
-      with:
-        file_pattern: coverage-badge.svg
-        commit_message: "chore: update coverage badge"
-        skip_dirty_check: true
-        commit_user_name: "github-actions[bot]"
-        commit_user_email: "github-actions[bot]@users.noreply.github.com"
+      run: |
+        # Сбрасываем изменения в coverage.json (он должен быть в .gitignore)
+        git restore coverage.json 2>/dev/null || true
+        # Удаляем coverage.json из индекса, если он был добавлен
+        git rm --cached coverage.json 2>/dev/null || true
+        # Добавляем только badge
+        git add coverage-badge.svg
+        # Проверяем, есть ли изменения для коммита
+        if git diff --cached --quiet; then
+          echo "No changes to commit"
+        else
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: update coverage badge"
+          git push
+        fi
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
