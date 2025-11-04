@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ main, develop ]
 
+permissions:
+  contents: write  # Для коммита coverage badge
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -15,6 +18,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
@@ -64,8 +70,6 @@ jobs:
       run: |
         # Сбрасываем изменения в coverage.json (он должен быть в .gitignore)
         git restore coverage.json 2>/dev/null || true
-        # Удаляем coverage.json из индекса, если он был добавлен
-        git rm --cached coverage.json 2>/dev/null || true
         # Добавляем только badge
         git add coverage-badge.svg
         # Проверяем, есть ли изменения для коммита
@@ -75,7 +79,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git commit -m "chore: update coverage badge"
-          git push
+          git push origin HEAD:${{ github.ref }}
         fi
 
     - name: Upload coverage to Codecov
