@@ -77,7 +77,7 @@ sidebar_label: ADR-002
 Для валидации подхода на публичных датасетах (оффлайн):
 
 - **Technology Product Categorization** — точность классификации продуктов по описанию
-- **Massive Product Text Classification Dataset** — метрики на крупном датасете товаров Amazon
+- **Massive Product Text Classification Dataset** (Kaggle) — метрики на датасете названий товаров с категориями Amazon
 - **PriceRunner Dataset** — точность на 35K предложениях из 10 категорий
 - **AlleNoise** — метрики на 500K+ текстах из 5 692 категорий (масштабируемость)
 
@@ -163,11 +163,16 @@ sidebar_label: ADR-002
 
    - Подходит для валидации подхода к классификации по тексту
 
-**Massive Product Text Classification Dataset**
 
-   - Названия товаров Amazon (США, Канада, Великобритания) с категориями
+**Massive Product Text Classification Dataset** (Kaggle)
 
-   - Масштабный датасет для оценки производительности
+   - Датасет: [Massive Product Text Classification Dataset](https://www.kaggle.com/datasets/asaniczka/product-titles-text-classification/data)
+
+   - Названия товаров с категориями для задач классификации текста
+
+   - Подходит для валидации подхода к классификации коротких текстовых описаний
+
+   - Используется для оффлайн оценки качества модели на релевантных данных (аналогично описаниям транзакций)
 
 **PriceRunner Dataset**
 
@@ -296,7 +301,7 @@ sidebar_label: ADR-002
 
 **Процесс:**
 
-1. Загрузка публичных датасетов (Technology Product Categorization, PriceRunner, etc.)
+1. Загрузка публичных датасетов (Product Titles Text Classification, Technology Product Categorization, PriceRunner, AlleNoise, etc.)
 2. Преобразование категорий в формат задачи (многоклассовая классификация)
 3. Обучение общего классификатора (без персонализации) на эмбеддингах
 4. Оценка метрик: Accuracy, Macro F1, Weighted F1
