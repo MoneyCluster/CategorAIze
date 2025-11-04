@@ -2,6 +2,8 @@
 
 Система персонализированной классификации финансовых трат пользователей с использованием ML.
 
+![Coverage](coverage-badge.svg)
+
 Документация проекта размещена на [GitHub Pages](https://moneycluster.github.io/CategorAIze/).
 
 ## Цель проекта
