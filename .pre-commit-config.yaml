@@ -1,0 +1,79 @@
+# Pre-commit hooks configuration
+# See https://pre-commit.com for more information
+
+repos:
+  # Ruff - быстрый линтер и форматтер
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.9
+    hooks:
+      # Линтинг
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+        exclude: ^(mkdocs_plugins\.py|docs/|site/|tools/|\.pre-commit-config\.yaml)
+      # Форматирование кода
+      - id: ruff-format
+        exclude: ^(docs/|site/|tools/)
+
+  # Black - форматтер кода (резервный, ruff-format должен быть достаточным)
+  - repo: https://github.com/psf/black
+    rev: 24.10.0
+    hooks:
+      - id: black
+        language_version: python3.11
+        args: [--check]
+        exclude: ^(docs/|site/|tools/|mkdocs_plugins\.py)
+
+  # Проверка импортов (опционально, ruff тоже проверяет импорты)
+  # - repo: https://github.com/pycqa/isort
+  #   rev: 5.13.2
+  #   hooks:
+  #     - id: isort
+  #       args: [--check-only, --diff]
+
+  # Проверка YAML файлов (мягкие правила)
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        args: [
+          -d,
+          "{extends: default, rules: {line-length: {max: 200}, comments: disable, document-start: disable, truthy: disable, brackets: disable, indentation: disable}}",
+        ]
+        exclude: ^(poetry.lock|docs/_likec4/|\.pre-commit-config\.yaml|\.github/workflows/)
+
+  # Проверка наличия секретов в коде (опционально, требует создания baseline)
+  # - repo: https://github.com/Yelp/detect-secrets
+  #   rev: v1.5.0
+  #   hooks:
+  #     - id: detect-secrets
+  #       args: [--baseline, .secrets.baseline]
+  #       exclude: poetry.lock
+
+  # Проверка trailing whitespace и других базовых вещей
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-added-large-files
+        args: [--maxkb=1000]
+      - id: check-json
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: debug-statements
+      - id: mixed-line-ending
+
+  # Проверка типов с mypy (опционально, может быть медленным)
+  # Раскомментируйте, если нужна проверка типов при каждом коммите
+  # - repo: https://github.com/pre-commit/mirrors-mypy
+  #   rev: v1.11.0
+  #   hooks:
+  #     - id: mypy
+  #       additional_dependencies: [types-all]
+  #       args: [--ignore-missing-imports, --no-strict-optional]
+  #       exclude: ^tests/
+
+default_language_version:
+  python: python3.11

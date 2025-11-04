@@ -43,11 +43,27 @@ target-version = ['py311']
 [tool.ruff]
 line-length = 100
 target-version = "py311"
-select = ["E", "F", "I", "N", "W", "UP", "B", "C4", "ISC", "ICN", "T20", "SIM", "ARG", "PTH", "PL", "TRY", "RUF"]
-ignore = ["RUF002"]  # Игнорируем предупреждения о кириллице в docstrings
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP", "B", "C4", "ISC", "ICN", "T20", "SIM", "ARG", "PTH", "PL", "TRY", "RUF"]
+ignore = [
+    "RUF001",  # Игнорируем предупреждения о кириллице в строках
+    "RUF002",  # Игнорируем предупреждения о кириллице в docstrings
+    "RUF003",  # Игнорируем предупреждения о кириллице в комментариях
+    "TRY003",  # Разрешаем длинные сообщения в исключениях
+    "PLR2004",  # Разрешаем магические числа в сравнениях
+    "N806",  # Разрешаем использование X, y для ML кода (стандартная практика)
+    "N803",  # Разрешаем использование X, y в сигнатурах функций (стандартная практика ML)
+    "F841",  # Разрешаем неиспользуемые переменные (для отладочных целей)
+    "ARG002",  # Разрешаем неиспользуемые аргументы
+    "E501",  # Разрешаем длинные строки (black форматирует автоматически)
+    "C416",  # Разрешаем dict comprehension
+    "PTH123",  # Разрешаем open() вместо Path.open() (для совместимости)
+]
+
+[tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
+"mkdocs_plugins.py" = ["E402"]  # Разрешаем импорт после изменения sys.path
 
 [tool.mypy]
 python_version = "3.11"
@@ -67,4 +83,3 @@ python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = "-v --cov=src/categoraize --cov-report=term-missing --cov-report=html"
-

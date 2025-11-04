@@ -3,5 +3,3 @@ window.addEventListener('DOMContentLoaded', () => {
     window.mermaid.initialize({ startOnLoad: true, securityLevel: 'loose' });
   }
 });
-
-

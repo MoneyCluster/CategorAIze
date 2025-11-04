@@ -146,6 +146,53 @@ CategorAIze/
 - Конфигурация модели хранится в YAML файлах
 - Версии зависимостей фиксированы в `pyproject.toml`
 
+## Pre-commit hooks
+
+Pre-commit хуки автоматически проверяют код перед каждым коммитом, запуская линтеры, форматтеры и другие проверки.
+
+### Установка
+
+```bash
+# Установите pre-commit (через Poetry, уже включен в dev зависимости)
+poetry install
+
+# Или глобально через pip
+pip install pre-commit
+
+# Установите хуки в репозиторий
+pre-commit install
+
+# Опционально: установите хуки для commit-msg (проверка сообщений коммитов)
+pre-commit install --hook-type commit-msg
+```
+
+### Использование
+
+После установки хуки будут автоматически запускаться при каждом `git commit`. Если проверки не пройдут, коммит будет отклонен.
+
+```bash
+# Запустить проверки вручную для всех файлов
+pre-commit run --all-files
+
+# Запустить проверки только для staged файлов
+pre-commit run
+
+# Пропустить хуки (не рекомендуется)
+git commit --no-verify
+```
+
+### Настроенные проверки
+
+- **Ruff** — быстрый линтер и форматтер Python (автоисправление)
+- **Black** — форматтер кода (проверка стиля)
+- **yamllint** — проверка YAML файлов
+- **pre-commit-hooks** — базовые проверки (trailing whitespace, EOF, JSON, TOML, etc.)
+
+Опциональные проверки (закомментированы в `.pre-commit-config.yaml`):
+- **isort** — проверка сортировки импортов (ruff тоже проверяет)
+- **detect-secrets** — поиск секретов в коде (требует baseline файл)
+- **mypy** — проверка типов (может быть медленной)
+
 ## Тестирование
 
 ```bash
@@ -155,10 +202,24 @@ poetry run pytest
 # Запуск с покрытием кода
 poetry run pytest --cov=src/categoraize --cov-report=html
 
-# Запуск линтеров
-poetry run ruff check src/
-poetry run black --check src/
-poetry run mypy src/
+# Запуск конкретного теста
+poetry run pytest tests/test_data_loader.py
+```
+
+## Проверка качества кода
+
+```bash
+# Линтинг
+poetry run ruff check src/ tests/
+
+# Форматирование (проверка)
+poetry run black --check src/ tests/
+
+# Форматирование (применить)
+poetry run black src/ tests/
+
+# Проверка типов
+poetry run mypy src/categoraize/ --ignore-missing-imports
 ```
 
 ## Документация

@@ -32,4 +32,3 @@ model:
 # Настройки вывода
 output:
   model_path: "models/checkpoint_lr"
-

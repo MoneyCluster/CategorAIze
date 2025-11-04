@@ -126,21 +126,21 @@ class ProductCategoryClassifier:
         logger.info(f"Количество категорий: {len(unique_categories)}")
 
         # Кодирование категорий в числовые метки
-        y = np.array([self.label_to_id[cat] for cat in categories])
+        y_data = np.array([self.label_to_id[cat] for cat in categories])
 
         # Получение эмбеддингов для продуктов
-        X = self.encode_products(product_titles)
+        x_data = self.encode_products(product_titles)
 
-        logger.info(f"Форма данных для обучения: X={X.shape}, y={y.shape}")
+        logger.info(f"Форма данных для обучения: X={x_data.shape}, y={y_data.shape}")
 
         # Обучение классификатора
         if class_weights is not None and hasattr(self.classifier, "class_weight"):
             # Для LogisticRegression
-            class_weight_dict = {i: weight for i, weight in enumerate(class_weights)}
+            class_weight_dict = dict(enumerate(class_weights))
             self.classifier.set_params(class_weight=class_weight_dict)
 
         logger.info("Обучение классификатора...")
-        self.classifier.fit(X, y)
+        self.classifier.fit(x_data, y_data)
 
         self.is_fitted = True
         logger.info("Обучение завершено успешно")
@@ -167,10 +167,10 @@ class ProductCategoryClassifier:
         logger.debug(f"Предсказание для {len(product_titles)} продуктов")
 
         # Получение эмбеддингов
-        X = self.encode_products(product_titles)
+        x_data = self.encode_products(product_titles)
 
         # Предсказание
-        y_pred = self.classifier.predict(X)
+        y_pred = self.classifier.predict(x_data)
 
         # Преобразование обратно в категории
         categories = [self.id_to_label[int(pred)] for pred in y_pred]
@@ -197,10 +197,10 @@ class ProductCategoryClassifier:
         logger.debug(f"Предсказание вероятностей для {len(product_titles)} продуктов")
 
         # Получение эмбеддингов
-        X = self.encode_products(product_titles)
+        x_data = self.encode_products(product_titles)
 
         # Предсказание вероятностей
-        probabilities = self.classifier.predict_proba(X)
+        probabilities = self.classifier.predict_proba(x_data)
 
         return probabilities
 
@@ -258,7 +258,7 @@ class ProductCategoryClassifier:
         }
 
         metadata_path = save_path / "metadata.json"
-        with open(metadata_path, "w", encoding="utf-8") as f:
+        with metadata_path.open("w", encoding="utf-8") as f:
             json.dump(metadata, f, indent=2, ensure_ascii=False)
 
         logger.info("Модель успешно сохранена")
@@ -282,7 +282,7 @@ class ProductCategoryClassifier:
         import json
 
         metadata_path = load_path / "metadata.json"
-        with open(metadata_path, encoding="utf-8") as f:
+        with metadata_path.open(encoding="utf-8") as f:
             metadata = json.load(f)
 
         # Создание экземпляра модели

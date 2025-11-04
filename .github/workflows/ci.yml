@@ -60,4 +60,3 @@ jobs:
         file: ./coverage.xml
         flags: unittests
         name: codecov-umbrella
-

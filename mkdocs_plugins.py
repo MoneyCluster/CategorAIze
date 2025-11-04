@@ -2,6 +2,7 @@
 MkDocs custom plugins registration.
 This file allows us to register custom plugins without packaging.
 """
+
 import sys
 from pathlib import Path
 
@@ -12,5 +13,4 @@ if str(tools_dir) not in sys.path:
 
 from escape_macros_plugin import EscapeMacrosInCodePlugin
 
-__all__ = ['EscapeMacrosInCodePlugin']
-
+__all__ = ["EscapeMacrosInCodePlugin"]

@@ -56,7 +56,7 @@ sidebar_label: ADR-001
       updated_at timestamp [not null, default: `now()`]
       last_login_at timestamp
       settings jsonb [note: 'JSON объект с настройками пользователя']
-      
+
       indexes {
         email [unique]
         created_at
@@ -76,7 +76,7 @@ sidebar_label: ADR-001
       metadata jsonb [note: 'Дополнительные метаданные']
       created_at timestamp [not null, default: `now()`]
       updated_at timestamp [not null, default: `now()`]
-      
+
       indexes {
         user_id
         parent_account_id
@@ -97,7 +97,7 @@ sidebar_label: ADR-001
       sort_order integer [not null, default: 0]
       created_at timestamp [not null, default: `now()`]
       updated_at timestamp [not null, default: `now()`]
-      
+
       indexes {
         user_id
         parent_id
@@ -113,7 +113,7 @@ sidebar_label: ADR-001
       metadata jsonb [note: 'Дополнительные метаданные (координаты, телефон и т.д.)']
       created_at timestamp [not null, default: `now()`]
       updated_at timestamp [not null, default: `now()`]
-      
+
       indexes {
         user_id
         (user_id, name)
@@ -136,7 +136,7 @@ sidebar_label: ADR-001
       uploaded_at timestamp [not null, default: `now()`]
       processed_at timestamp
       created_at timestamp [not null, default: `now()`]
-      
+
       indexes {
         user_id
         store_id
@@ -155,7 +155,7 @@ sidebar_label: ADR-001
       transaction_date date [not null, note: 'Дата транзакций в группе']
       created_at timestamp [not null, default: `now()`]
       updated_at timestamp [not null, default: `now()`]
-      
+
       indexes {
         user_id
         receipt_id
@@ -181,7 +181,7 @@ sidebar_label: ADR-001
       metadata jsonb [note: 'Дополнительные метаданные']
       created_at timestamp [not null, default: `now()`]
       updated_at timestamp [not null, default: `now()`]
-      
+
       indexes {
         account_id
         transaction_group_id
@@ -199,7 +199,7 @@ sidebar_label: ADR-001
       name varchar(100) [not null, note: 'Название тега']
       color varchar(7) [note: 'Цвет тега в HEX формате']
       created_at timestamp [not null, default: `now()`]
-      
+
       indexes {
         user_id
         (user_id, name) [unique]
@@ -209,7 +209,7 @@ sidebar_label: ADR-001
     Table transaction_tags {
       transaction_id uuid [ref: > transactions.id, note: 'Идентификатор транзакции']
       tag_id uuid [ref: > tags.id, note: 'Идентификатор тега']
-      
+
       indexes {
         (transaction_id, tag_id) [unique]
         transaction_id
@@ -230,7 +230,7 @@ sidebar_label: ADR-001
       metadata jsonb [note: 'Дополнительные метаданные']
       created_at timestamp [not null, default: `now()`]
       updated_at timestamp [not null, default: `now()`]
-      
+
       indexes {
         from_account_id
         to_account_id
@@ -248,7 +248,7 @@ sidebar_label: ADR-001
       confidence_threshold decimal(5,4) [note: 'Минимальный порог уверенности (если был)']
       is_validated boolean [not null, default: true, note: 'Флаг валидации данных']
       created_at timestamp [not null, default: `now()`]
-      
+
       indexes {
         user_id
         transaction_id
@@ -276,7 +276,7 @@ sidebar_label: ADR-001
       trained_at timestamp [not null, default: `now()`, note: 'Дата и время последнего обучения']
       created_at timestamp [not null, default: `now()`]
       updated_at timestamp [not null, default: `now()`]
-      
+
       indexes {
         user_id [unique]
       }
@@ -297,7 +297,7 @@ sidebar_label: ADR-001
       started_at timestamp [not null, default: `now()`, note: 'Дата и время начала обучения']
       completed_at timestamp [note: 'Дата и время завершения обучения']
       created_at timestamp [not null, default: `now()`]
-      
+
       indexes {
         user_id
         model_id
@@ -316,7 +316,7 @@ sidebar_label: ADR-001
       feedback_type varchar(50) [not null, default: 'correction', note: 'Тип обратной связи: correction, confirmation, rejection']
       is_used_for_training boolean [not null, default: true, note: 'Флаг использования в обучении']
       created_at timestamp [not null, default: `now()`]
-      
+
       indexes {
         user_id
         transaction_id
@@ -425,7 +425,7 @@ loop For each item in receipt
   ModelSvc -> ModelSvc: predict_category(embedding)
   ModelSvc --> TransGroupSvc: {predicted_category_id, confidence}
   deactivate ModelSvc
-  
+
   TransGroupSvc -> TransSvc: create_transaction(group_id, item, predicted_category_id)
   activate TransSvc
   TransSvc -> DB: INSERT transaction
@@ -851,4 +851,3 @@ end note
 ### Deployment Diagram: System Infrastructure
 
 {{ likec4_view('CategorAIze', 'deploymentInfrastructure') }}
-
