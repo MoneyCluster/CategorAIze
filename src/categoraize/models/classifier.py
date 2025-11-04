@@ -48,19 +48,19 @@ class ProductCategoryClassifier:
         # Инициализация классификатора
         if classifier_type == "lr":
             # Убираем max_iter из дефолтных параметров, если он уже есть в classifier_params
-            default_params = {"max_iter": 1000, "random_state": 42}
-            default_params.update(self.classifier_params)
-            self.classifier: BaseEstimator = LogisticRegression(**default_params)
+            lr_params: dict[str, int] = {"max_iter": 1000, "random_state": 42}
+            lr_params.update(self.classifier_params)
+            self.classifier: BaseEstimator = LogisticRegression(**lr_params)
         elif classifier_type == "mlp":
-            default_params = {
+            mlp_params: dict[str, int | tuple[int, int] | bool | float] = {
                 "hidden_layer_sizes": (128, 64),
                 "max_iter": 500,
                 "random_state": 42,
                 "early_stopping": True,
                 "validation_fraction": 0.1,
             }
-            default_params.update(self.classifier_params)
-            self.classifier = MLPClassifier(**default_params)
+            mlp_params.update(self.classifier_params)
+            self.classifier = MLPClassifier(**mlp_params)
         else:
             raise ValueError(f"Неизвестный тип классификатора: {classifier_type}")
 
@@ -126,21 +126,21 @@ class ProductCategoryClassifier:
         logger.info(f"Количество категорий: {len(unique_categories)}")
 
         # Кодирование категорий в числовые метки
-        y = np.array([self.label_to_id[cat] for cat in categories])
+        y_data = np.array([self.label_to_id[cat] for cat in categories])
 
         # Получение эмбеддингов для продуктов
-        X = self.encode_products(product_titles)
+        x_data = self.encode_products(product_titles)
 
-        logger.info(f"Форма данных для обучения: X={X.shape}, y={y.shape}")
+        logger.info(f"Форма данных для обучения: X={x_data.shape}, y={y_data.shape}")
 
         # Обучение классификатора
         if class_weights is not None and hasattr(self.classifier, "class_weight"):
             # Для LogisticRegression
-            class_weight_dict = {i: weight for i, weight in enumerate(class_weights)}
+            class_weight_dict = dict(enumerate(class_weights))
             self.classifier.set_params(class_weight=class_weight_dict)
 
         logger.info("Обучение классификатора...")
-        self.classifier.fit(X, y)
+        self.classifier.fit(x_data, y_data)
 
         self.is_fitted = True
         logger.info("Обучение завершено успешно")
@@ -167,12 +167,14 @@ class ProductCategoryClassifier:
         logger.debug(f"Предсказание для {len(product_titles)} продуктов")
 
         # Получение эмбеддингов
-        X = self.encode_products(product_titles)
+        x_data = self.encode_products(product_titles)
 
         # Предсказание
-        y_pred = self.classifier.predict(X)
+        y_pred = self.classifier.predict(x_data)
 
         # Преобразование обратно в категории
+        if self.id_to_label is None:
+            raise ValueError("Модель не обучена")
         categories = [self.id_to_label[int(pred)] for pred in y_pred]
 
         return categories
@@ -192,15 +194,17 @@ class ProductCategoryClassifier:
 
         # Обработка пустого списка
         if len(product_titles) == 0:
+            if self.id_to_label is None:
+                raise ValueError("Модель не обучена")
             return np.array([]).reshape(0, len(self.id_to_label))
 
         logger.debug(f"Предсказание вероятностей для {len(product_titles)} продуктов")
 
         # Получение эмбеддингов
-        X = self.encode_products(product_titles)
+        x_data = self.encode_products(product_titles)
 
         # Предсказание вероятностей
-        probabilities = self.classifier.predict_proba(X)
+        probabilities: np.ndarray = self.classifier.predict_proba(x_data)
 
         return probabilities
 
@@ -258,7 +262,7 @@ class ProductCategoryClassifier:
         }
 
         metadata_path = save_path / "metadata.json"
-        with open(metadata_path, "w", encoding="utf-8") as f:
+        with metadata_path.open("w", encoding="utf-8") as f:
             json.dump(metadata, f, indent=2, ensure_ascii=False)
 
         logger.info("Модель успешно сохранена")
@@ -282,7 +286,7 @@ class ProductCategoryClassifier:
         import json
 
         metadata_path = load_path / "metadata.json"
-        with open(metadata_path, encoding="utf-8") as f:
+        with metadata_path.open(encoding="utf-8") as f:
             metadata = json.load(f)
 
         # Создание экземпляра модели

@@ -123,7 +123,7 @@ specification {
 model MyProject {
   system api "API Service"
   system db "Database"
-  
+
   relationship api -> db "Reads/Writes"
 }
 
@@ -249,4 +249,3 @@ python3 -m mkdocs build
 
 - [LikeC4 документация](https://likec4.dev) — официальная документация LikeC4
 - [MkDocs Material](https://squidfunk.github.io/mkdocs-material/) — документация темы
-

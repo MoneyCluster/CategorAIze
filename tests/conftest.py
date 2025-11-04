@@ -1,6 +1,5 @@
 """Конфигурация pytest для общих фикстур."""
 
-
 import pandas as pd
 import pytest
 

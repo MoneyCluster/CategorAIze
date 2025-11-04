@@ -51,7 +51,23 @@ jobs:
       run: poetry run mypy src/categoraize/ --ignore-missing-imports
 
     - name: Run tests
-      run: poetry run pytest tests/ -v --cov=src/categoraize --cov-report=xml --cov-report=term
+      run: poetry run pytest tests/ -v --cov=src/categoraize --cov-report=xml --cov-report=term --cov-report=json
+
+    - name: Generate coverage badge
+      if: matrix.python-version == '3.11'
+      run: |
+        pip install coverage-badge
+        coverage-badge -f -o coverage-badge.svg
+
+    - name: Commit coverage badge
+      if: matrix.python-version == '3.11' && github.event_name == 'push'
+      uses: stefanzweifel/git-auto-commit-action@v5
+      with:
+        file_pattern: coverage-badge.svg
+        commit_message: "chore: update coverage badge"
+        skip_dirty_check: true
+        commit_user_name: "github-actions[bot]"
+        commit_user_email: "github-actions[bot]@users.noreply.github.com"
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
@@ -60,4 +76,3 @@ jobs:
         file: ./coverage.xml
         flags: unittests
         name: codecov-umbrella
-

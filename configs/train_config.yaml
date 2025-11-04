@@ -38,4 +38,3 @@ model:
 # Настройки вывода
 output:
   model_path: "models/checkpoint"  # Путь для сохранения модели
-

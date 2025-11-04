@@ -6,7 +6,10 @@ import sys
 from pathlib import Path
 from typing import Any
 
-import yaml
+try:
+    import yaml
+except ImportError:
+    yaml = None  # type: ignore[assignment]
 
 from categoraize.training.evaluator import Evaluator
 from categoraize.training.trainer import Trainer
@@ -37,13 +40,17 @@ def load_config(config_path: str | Path) -> dict[str, Any]:
     Returns:
         Словарь с конфигурацией
     """
+    if yaml is None:
+        raise ImportError("PyYAML не установлен. Установите: pip install pyyaml")
+
     config_path = Path(config_path)
 
     if not config_path.exists():
         raise FileNotFoundError(f"Конфигурационный файл не найден: {config_path}")
 
-    with open(config_path, encoding="utf-8") as f:
-        config = yaml.safe_load(f)
+    with config_path.open(encoding="utf-8") as f:
+        loaded: Any = yaml.safe_load(f) if yaml is not None else {}
+        config: dict[str, Any] = loaded if isinstance(loaded, dict) else {}
 
     return config
 

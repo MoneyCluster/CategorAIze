@@ -37,11 +37,11 @@ model {
 
             web -> api 'API calls'
             mobile -> api 'API calls'
-            
+
             api -> embedding_service 'Get embeddings'
             api -> classifier_service 'Predict category'
             api -> feedback_loop 'Submit feedback'
-            
+
             classifier_service -> storage 'Read/Write models'
             classifier_service -> embedding_service 'Use embeddings'
             feedback_loop -> storage 'Append training data'

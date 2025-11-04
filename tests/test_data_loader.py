@@ -86,7 +86,9 @@ class TestDataLoader:
         with pytest.raises(ValueError, match="отсутствуют необходимые колонки"):
             loader.load_kaggle_dataset("wrong.csv")
 
-    def test_load_kaggle_dataset_autodetect_columns(self, temp_data_dir, sample_data_alternative_columns):
+    def test_load_kaggle_dataset_autodetect_columns(
+        self, temp_data_dir, sample_data_alternative_columns
+    ):
         """Тест автодетекта колонок с альтернативными названиями."""
         # Создаем файл с альтернативными названиями колонок
         data_path = Path(temp_data_dir) / "alternative.csv"
@@ -101,7 +103,9 @@ class TestDataLoader:
         assert len(df) == 4
         assert df["product_title"].iloc[0] == "iPhone 15 Pro Max"
 
-    def test_load_kaggle_dataset_custom_mapping(self, temp_data_dir, sample_data_alternative_columns):
+    def test_load_kaggle_dataset_custom_mapping(
+        self, temp_data_dir, sample_data_alternative_columns
+    ):
         """Тест загрузки с кастомным маппингом колонок."""
         # Создаем файл с альтернативными названиями колонок
         data_path = Path(temp_data_dir) / "custom.csv"

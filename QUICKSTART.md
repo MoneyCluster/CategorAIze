@@ -60,6 +60,20 @@ poetry run pytest --cov=src/categoraize --cov-report=html
 poetry run pytest tests/test_data_loader.py
 ```
 
+## Pre-commit hooks
+
+Рекомендуется установить pre-commit хуки для автоматической проверки кода перед коммитами:
+
+```bash
+# Установка хуков (после poetry install)
+pre-commit install
+
+# Запуск проверок вручную
+pre-commit run --all-files
+```
+
+Подробнее см. раздел "Pre-commit hooks" в README.md
+
 ## Проверка качества кода
 
 ```bash
@@ -95,4 +109,3 @@ poetry run mypy src/categoraize/ --ignore-missing-imports
 ```bash
 python -m categoraize.train --help
 ```
-

@@ -25,4 +25,3 @@ echo "🧹 Cleaning up..."
 rm -rf dist-likec4
 
 echo "✅ Done! LikeC4 diagrams are ready in docs/_static/likec4/"
-

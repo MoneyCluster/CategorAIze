@@ -1,6 +1,5 @@
 """Тесты для модуля классификатора."""
 
-
 import numpy as np
 import pytest
 
