@@ -57,7 +57,7 @@ jobs:
       if: matrix.python-version == '3.11'
       run: |
         pip install coverage-badge
-        coverage-badge -o coverage-badge.svg
+        coverage-badge -f -o coverage-badge.svg
 
     - name: Commit coverage badge
       if: matrix.python-version == '3.11' && github.event_name == 'push'
