@@ -1,0 +1,41 @@
+# Конфигурация для обучения модели классификации продуктов
+
+# Настройки данных
+data:
+  path: "data"  # Путь к директории с данными
+  filename: "product_titles.csv"  # Имя файла с данными
+  # Опциональный маппинг колонок, если в датасете другие названия
+  # Если не указан, будет использован автодетект
+  # column_mapping:
+  #   product_title: "title"  # Стандартное имя: имя в датасете
+  #   category: "category_name"
+
+# Настройки предобработки
+preprocessing:
+  lowercase: true  # Приводить текст к нижнему регистру
+  remove_punctuation: false  # Удалять пунктуацию
+
+# Настройки разделения данных
+split:
+  test_size: 0.2  # Доля тестовой выборки
+  val_size: 0.1  # Доля валидационной выборки (от train)
+  random_seed: 42  # Seed для воспроизводимости
+
+# Настройки модели
+model:
+  embedding_model_name: "sentence-transformers/all-MiniLM-L6-v2"  # Модель для эмбеддингов
+  classifier_type: "mlp"  # Тип классификатора: "lr" или "mlp"
+  classifier_params:
+    # Параметры для MLPClassifier
+    hidden_layer_sizes: [128, 64]
+    max_iter: 500
+    early_stopping: true
+    validation_fraction: 0.1
+    # Для LogisticRegression можно указать:
+    # max_iter: 1000
+    # C: 1.0
+
+# Настройки вывода
+output:
+  model_path: "models/checkpoint"  # Путь для сохранения модели
+

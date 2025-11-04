@@ -1,0 +1,35 @@
+# Конфигурация для обучения модели с LogisticRegression
+
+# Настройки данных
+data:
+  path: "data"
+  filename: "product_titles.csv"
+  # Опциональный маппинг колонок, если в датасете другие названия
+  # column_mapping:
+  #   product_title: "title"
+  #   category: "category_name"
+
+# Настройки предобработки
+preprocessing:
+  lowercase: true
+  remove_punctuation: false
+
+# Настройки разделения данных
+split:
+  test_size: 0.2
+  val_size: 0.1
+  random_seed: 42
+
+# Настройки модели
+model:
+  embedding_model_name: "sentence-transformers/all-MiniLM-L6-v2"
+  classifier_type: "lr"  # LogisticRegression
+  classifier_params:
+    max_iter: 1000
+    C: 1.0
+    solver: "lbfgs"
+
+# Настройки вывода
+output:
+  model_path: "models/checkpoint_lr"
+
