@@ -48,19 +48,19 @@ class ProductCategoryClassifier:
         # Инициализация классификатора
         if classifier_type == "lr":
             # Убираем max_iter из дефолтных параметров, если он уже есть в classifier_params
-            default_params = {"max_iter": 1000, "random_state": 42}
-            default_params.update(self.classifier_params)
-            self.classifier: BaseEstimator = LogisticRegression(**default_params)
+            lr_params: dict[str, int] = {"max_iter": 1000, "random_state": 42}
+            lr_params.update(self.classifier_params)
+            self.classifier: BaseEstimator = LogisticRegression(**lr_params)
         elif classifier_type == "mlp":
-            default_params = {
+            mlp_params: dict[str, int | tuple[int, int] | bool | float] = {
                 "hidden_layer_sizes": (128, 64),
                 "max_iter": 500,
                 "random_state": 42,
                 "early_stopping": True,
                 "validation_fraction": 0.1,
             }
-            default_params.update(self.classifier_params)
-            self.classifier = MLPClassifier(**default_params)
+            mlp_params.update(self.classifier_params)
+            self.classifier = MLPClassifier(**mlp_params)
         else:
             raise ValueError(f"Неизвестный тип классификатора: {classifier_type}")
 
@@ -173,6 +173,8 @@ class ProductCategoryClassifier:
         y_pred = self.classifier.predict(x_data)
 
         # Преобразование обратно в категории
+        if self.id_to_label is None:
+            raise ValueError("Модель не обучена")
         categories = [self.id_to_label[int(pred)] for pred in y_pred]
 
         return categories
@@ -192,6 +194,8 @@ class ProductCategoryClassifier:
 
         # Обработка пустого списка
         if len(product_titles) == 0:
+            if self.id_to_label is None:
+                raise ValueError("Модель не обучена")
             return np.array([]).reshape(0, len(self.id_to_label))
 
         logger.debug(f"Предсказание вероятностей для {len(product_titles)} продуктов")
@@ -200,7 +204,7 @@ class ProductCategoryClassifier:
         x_data = self.encode_products(product_titles)
 
         # Предсказание вероятностей
-        probabilities = self.classifier.predict_proba(x_data)
+        probabilities: np.ndarray = self.classifier.predict_proba(x_data)
 
         return probabilities
 

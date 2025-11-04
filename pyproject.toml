@@ -28,6 +28,7 @@ black = "^24.8.0"
 ruff = "^0.6.0"
 mypy = "^1.11.0"
 pre-commit = "^3.7.0"
+types-PyYAML = "^6.0.0"
 
 [tool.poetry.scripts]
 categoraize-train = "categoraize.train:main"

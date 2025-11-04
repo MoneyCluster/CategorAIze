@@ -2,19 +2,19 @@
 # See https://pre-commit.com for more information
 
 repos:
-  # Ruff - быстрый линтер и форматтер
+  # Ruff - быстрый линтер и форматтер (как в CI)
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.6.9
     hooks:
-      # Линтинг
+      # Линтинг (как в CI: ruff check src/ tests/)
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
         exclude: ^(mkdocs_plugins\.py|docs/|site/|tools/|\.pre-commit-config\.yaml)
-      # Форматирование кода
+      # Форматирование кода (как в CI: black --check)
       - id: ruff-format
         exclude: ^(docs/|site/|tools/)
 
-  # Black - форматтер кода (резервный, ruff-format должен быть достаточным)
+  # Black - форматтер кода (как в CI: black --check src/ tests/)
   - repo: https://github.com/psf/black
     rev: 24.10.0
     hooks:
@@ -65,15 +65,25 @@ repos:
       - id: debug-statements
       - id: mixed-line-ending
 
-  # Проверка типов с mypy (опционально, может быть медленным)
-  # Раскомментируйте, если нужна проверка типов при каждом коммите
-  # - repo: https://github.com/pre-commit/mirrors-mypy
-  #   rev: v1.11.0
+  # Запуск тестов (опционально, можно включить для автоматического запуска)
+  # Раскомментируйте, если хотите запускать тесты при каждом коммите
+  # - repo: local
   #   hooks:
-  #     - id: mypy
-  #       additional_dependencies: [types-all]
-  #       args: [--ignore-missing-imports, --no-strict-optional]
-  #       exclude: ^tests/
+  #     - id: pytest
+  #       name: pytest
+  #       entry: poetry run pytest tests/ -v
+  #       language: system
+  #       pass_filenames: false
+  #       always_run: true
+
+  # Проверка типов с mypy (как в CI: mypy src/categoraize/ --ignore-missing-imports)
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.11.0
+    hooks:
+      - id: mypy
+        additional_dependencies: [types-PyYAML]
+        args: [--ignore-missing-imports]
+        exclude: ^(tests/|tools/|docs/|site/)
 
 default_language_version:
   python: python3.11

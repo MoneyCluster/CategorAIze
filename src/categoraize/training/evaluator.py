@@ -151,14 +151,14 @@ class Evaluator:
             model: Обученная модель
             X: Список названий продуктов
             y_true: Истинные категории
-            id_to_label: Mapping для меток (опционально)
+            id_to_label: Mapping для меток (опционально, не используется)
 
         Returns:
             Строка с отчетом
         """
         y_pred = model.predict(X)
 
-        report = classification_report(y_true, y_pred, zero_division=0)
+        report: str = classification_report(y_true, y_pred, zero_division=0)
         logger.info("\n" + "=" * 60)
         logger.info("Детальный отчет по классификации:")
         logger.info("=" * 60)
@@ -184,7 +184,7 @@ class Evaluator:
             Матрица ошибок
         """
         y_pred = model.predict(X)
-        cm = confusion_matrix(y_true, y_pred)
+        cm: np.ndarray = confusion_matrix(y_true, y_pred)
 
         logger.info("Матрица ошибок:")
         logger.info(f"\n{cm}")

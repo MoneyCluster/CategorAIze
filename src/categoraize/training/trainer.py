@@ -135,6 +135,8 @@ class Trainer:
         )
 
         # Кодирование меток
+        if self.preprocessor is None:
+            raise ValueError("Preprocessor не инициализирован")
         _, self.id_to_label = self.preprocessor.encode_labels(df["category"])
 
         logger.info("Разделение данных:")
@@ -196,6 +198,8 @@ class Trainer:
 
         class_weights = None
         if use_class_weights:
+            if self.preprocessor is None:
+                raise ValueError("Preprocessor не инициализирован")
             # Вычисление весов классов
             y_train_series = pd.Series(y_train)
             encoded_labels, id_to_label = self.preprocessor.encode_labels(y_train_series)
