@@ -10,7 +10,12 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 # Копирование архива модели
-COPY model-store/*.mar /app/model-store/
+# Создаём директорию для model-store
+RUN mkdir -p /app/model-store
+
+# Копирование .mar файлов (если они есть в build context)
+# Используем COPY с директорией - если файлов нет, директория будет пустой
+COPY model-store/ /app/model-store/
 
 # Копирование конфигурации (если нужна)
 COPY torchserve/config.properties /app/config.properties

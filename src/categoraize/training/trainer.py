@@ -294,7 +294,9 @@ class Trainer:
 
             # 3. Разделение данных
             logger.info("Шаг 3: Разделение данных")
-            X_train, X_val, X_test, y_train, y_val, y_test, id_to_label = self.split_data(df_processed)
+            X_train, X_val, X_test, y_train, y_val, y_test, id_to_label = self.split_data(
+                df_processed
+            )
 
         # 4. Создание модели
         logger.info("Шаг 4: Создание модели")

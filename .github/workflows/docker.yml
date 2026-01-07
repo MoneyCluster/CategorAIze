@@ -50,15 +50,32 @@ jobs:
   build-torchserve:
     name: Build TorchServe image
     runs-on: ubuntu-latest
-    if: false  # Отключено до создания архива модели
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Prepare model-store directory
+        id: check_model
+        run: |
+          mkdir -p model-store
+          # Создаём README если его нет, чтобы COPY не падал
+          if [ ! -f "model-store/README.md" ]; then
+            echo "# Model archives will be placed here" > model-store/README.md
+          fi
+          # Проверяем наличие .mar файлов
+          if [ "$(ls -A model-store/*.mar 2>/dev/null)" ]; then
+            echo "model_exists=true" >> $GITHUB_OUTPUT
+            echo "✓ Model archive (.mar) found"
+          else
+            echo "model_exists=false" >> $GITHUB_OUTPUT
+            echo "⚠️ Model archive (.mar) not found - build will create empty image"
+          fi
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Build Docker image
+        if: steps.check_model.outputs.model_exists == 'true'
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -67,4 +84,11 @@ jobs:
           tags: mymodel-serve:test
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Skip build message
+        if: steps.check_model.outputs.model_exists == 'false'
+        run: |
+          echo "⚠️ TorchServe build skipped: model archive (.mar file) not found"
+          echo "To build TorchServe image, first create model archive using:"
+          echo "  ./scripts/create_torchserve_archive.sh"
 

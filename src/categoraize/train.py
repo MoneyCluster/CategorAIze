@@ -77,7 +77,10 @@ def _setup_mlflow(config: dict[str, Any], config_path: Path, logger: logging.Log
 
 
 def _log_mlflow_metrics(
-    val_metrics: dict[str, Any], test_metrics: dict[str, Any], model_path: Path, logger: logging.Logger
+    val_metrics: dict[str, Any],
+    test_metrics: dict[str, Any],
+    model_path: Path,
+    logger: logging.Logger,
 ) -> None:
     """
     Логирование метрик в MLflow.
@@ -213,7 +216,7 @@ def main() -> None:
         # Запуск обучения с MLflow трекингом
         from contextlib import nullcontext
 
-        with (mlflow.start_run() if use_mlflow else nullcontext()):
+        with mlflow.start_run() if use_mlflow else nullcontext():
             # Создание тренера
             trainer = Trainer(config)
 
