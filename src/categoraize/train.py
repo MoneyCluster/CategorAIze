@@ -117,7 +117,10 @@ def _log_mlflow_metrics(
     # Логирование пути к модели как артефакта
     mlflow.log_artifact(str(model_path), "model")
 
-    logger.info(f"MLflow run ID: {mlflow.active_run().info.run_id}")  # type: ignore[attr-defined]
+    # Логирование run ID
+    active_run = mlflow.active_run()
+    if active_run is not None:
+        logger.info(f"MLflow run ID: {active_run.info.run_id}")
 
 
 def _flatten_config(config: dict[str, Any], parent_key: str = "", sep: str = ".") -> dict[str, Any]:
