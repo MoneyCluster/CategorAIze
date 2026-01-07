@@ -22,6 +22,101 @@ from categoraize.training.evaluator import Evaluator
 from categoraize.training.trainer import Trainer
 
 
+def _setup_mlflow(config: dict[str, Any], config_path: Path, logger: logging.Logger) -> bool:
+    """
+    Настройка MLflow для трекинга экспериментов.
+
+    Args:
+        config: Конфигурация обучения
+        config_path: Путь к конфигурационному файлу
+        logger: Логгер
+
+    Returns:
+        True если MLflow используется, False иначе
+    """
+    if mlflow is None:
+        logger.warning("MLflow не установлен. Трекинг экспериментов отключен.")
+        return False
+
+    # Включение autolog для sklearn и transformers
+    mlflow.sklearn.autolog()
+    mlflow.transformers.autolog()
+
+    # Логирование параметров из конфига
+    flat_config = _flatten_config(config)
+    mlflow.log_params(flat_config)
+
+    # Логирование конфигурационного файла как артефакта
+    mlflow.log_artifact(str(config_path), "config")
+
+    # Логирование dvc.lock если существует
+    dvc_lock_path = Path("dvc.lock")
+    if dvc_lock_path.exists():
+        mlflow.log_artifact(str(dvc_lock_path), "dvc")
+        logger.info("Логирование dvc.lock в MLflow")
+
+        # Получение хешей DVC для связи данных и эксперимента
+        try:
+            import subprocess
+
+            result = subprocess.run(
+                ["dvc", "dag", "--dot"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if result.returncode == 0:
+                with dvc_lock_path.open(encoding="utf-8") as f:
+                    dvc_lock = yaml.safe_load(f) if yaml else {}
+                    # Логируем информацию о версиях данных
+                    mlflow.set_tag("dvc_pipeline", "configured")
+        except Exception as e:
+            logger.warning(f"Не удалось получить информацию DVC: {e}")
+
+    return True
+
+
+def _log_mlflow_metrics(
+    val_metrics: dict[str, Any], test_metrics: dict[str, Any], model_path: Path, logger: logging.Logger
+) -> None:
+    """
+    Логирование метрик в MLflow.
+
+    Args:
+        val_metrics: Метрики на validation set
+        test_metrics: Метрики на test set
+        model_path: Путь к сохранённой модели
+        logger: Логгер
+    """
+    if mlflow is None:
+        return
+
+    # Метрики validation set
+    mlflow.log_metrics(
+        {
+            "val_accuracy": val_metrics["accuracy"],
+            "val_macro_f1": val_metrics["macro_f1"],
+            "val_weighted_f1": val_metrics["weighted_f1"],
+            "val_mean_confidence": val_metrics["mean_confidence"],
+        }
+    )
+
+    # Метрики test set
+    mlflow.log_metrics(
+        {
+            "test_accuracy": test_metrics["accuracy"],
+            "test_macro_f1": test_metrics["macro_f1"],
+            "test_weighted_f1": test_metrics["weighted_f1"],
+            "test_mean_confidence": test_metrics["mean_confidence"],
+        }
+    )
+
+    # Логирование пути к модели как артефакта
+    mlflow.log_artifact(str(model_path), "model")
+
+    logger.info(f"MLflow run ID: {mlflow.active_run().info.run_id}")  # type: ignore[attr-defined]
+
+
 def _flatten_config(config: dict[str, Any], parent_key: str = "", sep: str = ".") -> dict[str, Any]:
     """
     Преобразование вложенного словаря конфигурации в плоский словарь для MLflow.
@@ -113,55 +208,12 @@ def main() -> None:
         config_path = Path(args.config)
 
         # Настройка MLflow
-        if mlflow is None:
-            logger.warning("MLflow не установлен. Трекинг экспериментов отключен.")
-            use_mlflow = False
-        else:
-            use_mlflow = True
-            # Включение autolog для sklearn и transformers
-            mlflow.sklearn.autolog()
-            mlflow.transformers.autolog()
+        use_mlflow = _setup_mlflow(config, config_path, logger) if mlflow is not None else False
 
         # Запуск обучения с MLflow трекингом
         from contextlib import nullcontext
 
         with (mlflow.start_run() if use_mlflow else nullcontext()):
-            if use_mlflow:
-                # Логирование параметров из конфига
-                flat_config = _flatten_config(config)
-                mlflow.log_params(flat_config)
-
-                # Логирование конфигурационного файла как артефакта
-                mlflow.log_artifact(str(config_path), "config")
-
-                # Логирование dvc.lock если существует
-                dvc_lock_path = Path("dvc.lock")
-                if dvc_lock_path.exists():
-                    mlflow.log_artifact(str(dvc_lock_path), "dvc")
-                    logger.info("Логирование dvc.lock в MLflow")
-
-                # Получение хешей DVC для связи данных и эксперимента
-                try:
-                    import subprocess
-
-                    result = subprocess.run(
-                        ["dvc", "dag", "--dot"],
-                        capture_output=True,
-                        text=True,
-                        check=False,
-                    )
-                    if result.returncode == 0:
-                        # Попытка получить хеш данных из dvc.lock
-                        if dvc_lock_path.exists():
-                            import json
-
-                            with dvc_lock_path.open(encoding="utf-8") as f:
-                                dvc_lock = yaml.safe_load(f) if yaml else {}
-                                # Логируем информацию о версиях данных
-                                mlflow.set_tag("dvc_pipeline", "configured")
-                except Exception as e:
-                    logger.warning(f"Не удалось получить информацию DVC: {e}")
-
             # Создание тренера
             trainer = Trainer(config)
 
@@ -201,38 +253,8 @@ def main() -> None:
 
             # Логирование метрик в MLflow
             if use_mlflow:
-                # Метрики validation set
-                mlflow.log_metrics(
-                    {
-                        "val_accuracy": val_metrics["accuracy"],
-                        "val_macro_f1": val_metrics["macro_f1"],
-                        "val_weighted_f1": val_metrics["weighted_f1"],
-                        "val_mean_confidence": val_metrics["mean_confidence"],
-                    }
-                )
-
-                # Метрики test set
-                mlflow.log_metrics(
-                    {
-                        "test_accuracy": test_metrics["accuracy"],
-                        "test_macro_f1": test_metrics["macro_f1"],
-                        "test_weighted_f1": test_metrics["weighted_f1"],
-                        "test_mean_confidence": test_metrics["mean_confidence"],
-                    }
-                )
-
-                # Логирование модели
                 model_path = Path(config.get("output", {}).get("model_path", "models/checkpoint"))
-                mlflow.sklearn.log_model(
-                    model.classifier,  # type: ignore[attr-defined]
-                    "classifier",
-                    registered_model_name="ProductCategoryClassifier",
-                )
-
-                # Логирование пути к модели
-                mlflow.log_artifact(str(model_path), "model")
-
-                logger.info(f"MLflow run ID: {mlflow.active_run().info.run_id}")  # type: ignore[attr-defined]
+                _log_mlflow_metrics(val_metrics, test_metrics, model_path, logger)
 
             logger.info("=" * 60)
             logger.info("Обучение и оценка завершены успешно")
