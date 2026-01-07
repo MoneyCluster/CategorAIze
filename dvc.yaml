@@ -1,0 +1,36 @@
+stages:
+  prepare:
+    cmd: python scripts/prepare.py --input data/product_titles.csv --output-dir data/processed
+    deps:
+      - data/product_titles.csv
+      - scripts/prepare.py
+      - src/categoraize/data/loader.py
+      - src/categoraize/data/preprocessor.py
+    outs:
+      - data/processed/train.csv
+      - data/processed/val.csv
+      - data/processed/test.csv
+
+  train:
+    cmd: python -m categoraize.train configs/train_config.yaml
+    deps:
+      - data/processed/train.csv
+      - data/processed/val.csv
+      - data/processed/test.csv
+      - configs/train_config.yaml
+      - src/categoraize/
+    outs:
+      - models/checkpoint/
+
+  evaluate:
+    cmd: python scripts/evaluate.py --model-path models/checkpoint --val-data data/processed/val.csv --test-data data/processed/test.csv
+    deps:
+      - models/checkpoint
+      - data/processed/val.csv
+      - data/processed/test.csv
+      - scripts/evaluate.py
+      - src/categoraize/
+    outs:
+      - metrics/val_metrics.json
+      - metrics/test_metrics.json
+

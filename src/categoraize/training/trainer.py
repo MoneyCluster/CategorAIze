@@ -225,6 +225,47 @@ class Trainer:
         logger.info(f"Сохранение модели в {save_path}")
         self.model.save_pretrained(save_path)
 
+    def load_processed_data(self) -> tuple | None:
+        """
+        Загрузка уже обработанных данных из data/processed/.
+
+        Returns:
+            Tuple (X_train, X_val, X_test, y_train, y_val, y_test, id_to_label) или None
+        """
+        processed_dir = Path("data/processed")
+        train_path = processed_dir / "train.csv"
+        val_path = processed_dir / "val.csv"
+        test_path = processed_dir / "test.csv"
+
+        if not (train_path.exists() and val_path.exists() and test_path.exists()):
+            return None
+
+        logger.info("Обнаружены предобработанные данные, загрузка из data/processed/")
+
+        train_df = pd.read_csv(train_path)
+        val_df = pd.read_csv(val_path)
+        test_df = pd.read_csv(test_path)
+
+        X_train = train_df["product_title"].tolist()
+        y_train = train_df["category"].tolist()
+        X_val = val_df["product_title"].tolist()
+        y_val = val_df["category"].tolist()
+        X_test = test_df["product_title"].tolist()
+        y_test = test_df["category"].tolist()
+
+        # Создание mapping для категорий
+        all_categories = sorted(set(y_train + y_val + y_test))
+        id_to_label = {idx: label for idx, label in enumerate(all_categories)}
+        self.id_to_label = id_to_label
+
+        # Инициализация preprocessor для совместимости
+        if self.preprocessor is None:
+            self.preprocessor = DataPreprocessor()
+
+        logger.info(f"Загружено данных: Train={len(X_train)}, Val={len(X_val)}, Test={len(X_test)}")
+
+        return (X_train, X_val, X_test, y_train, y_val, y_test, id_to_label)
+
     def run_training(self) -> tuple:
         """
         Запуск полного пайплайна обучения.
@@ -236,17 +277,24 @@ class Trainer:
         logger.info("Начало пайплайна обучения")
         logger.info("=" * 60)
 
-        # 1. Загрузка данных
-        logger.info("Шаг 1: Загрузка данных")
-        df = self.load_data()
+        # Попытка загрузить предобработанные данные
+        processed_data = self.load_processed_data()
 
-        # 2. Предобработка
-        logger.info("Шаг 2: Предобработка данных")
-        df_processed = self.preprocess_data(df)
+        if processed_data is not None:
+            # Используем предобработанные данные
+            X_train, X_val, X_test, y_train, y_val, y_test, id_to_label = processed_data
+        else:
+            # 1. Загрузка данных
+            logger.info("Шаг 1: Загрузка данных")
+            df = self.load_data()
 
-        # 3. Разделение данных
-        logger.info("Шаг 3: Разделение данных")
-        X_train, X_val, X_test, y_train, y_val, y_test, id_to_label = self.split_data(df_processed)
+            # 2. Предобработка
+            logger.info("Шаг 2: Предобработка данных")
+            df_processed = self.preprocess_data(df)
+
+            # 3. Разделение данных
+            logger.info("Шаг 3: Разделение данных")
+            X_train, X_val, X_test, y_train, y_val, y_test, id_to_label = self.split_data(df_processed)
 
         # 4. Создание модели
         logger.info("Шаг 4: Создание модели")

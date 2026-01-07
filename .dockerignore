@@ -1,0 +1,79 @@
+# Git
+.git/
+.gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.hypothesis/
+
+# Documentation
+docs/
+site/
+dist-likec4/
+
+# Data files (versioned via DVC)
+data/*.csv
+data/processed/
+*.csv
+*.pkl
+*.pt
+*.joblib
+
+# Models (versioned via DVC, will be pulled)
+models/*/
+!models/.gitkeep
+
+# MLflow
+mlruns/
+
+# DVC cache
+.dvc/cache/
+
+# CI/CD
+.github/
+
+# Coverage
+coverage.json
+coverage-badge.svg
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Poetry
+poetry.lock.bak
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+
