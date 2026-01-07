@@ -29,12 +29,9 @@ COPY src/ /app/src/
 # Установка DVC для загрузки модели (если нужно)
 RUN poetry run pip install dvc
 
-# Копирование DVC конфигурации (если есть)
-COPY .dvc/ .dvc/
-COPY dvc.yaml dvc.lock .dvcignore ./
-
-# Загрузка модели через DVC (опционально, можно также скопировать напрямую)
-# RUN poetry run dvc pull || echo "DVC pull failed, model should be copied directly"
+# Примечание: для офлайн-инференса модель должна быть скопирована напрямую
+# или загружена через DVC pull (если DVC конфигурация доступна)
+# COPY models/ /app/models/
 
 # Установка переменных окружения
 ENV PYTHONPATH=/app/src
