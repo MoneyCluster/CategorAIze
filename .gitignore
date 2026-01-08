@@ -212,3 +212,21 @@ site/
 # MkDocs and LikeC4 build artifacts
 dist-likec4/
 docs/_static/likec4/
+
+# DVC
+.dvc/
+.dvcignore
+
+# MLflow
+mlruns/
+
+# Model files (versioned via DVC)
+*.pkl
+*.pt
+*.joblib
+models/*/
+!models/.gitkeep
+
+# Data files (versioned via DVC)
+data/*.csv
+data/processed/

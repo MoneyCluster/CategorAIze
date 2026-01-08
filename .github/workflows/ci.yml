@@ -48,6 +48,11 @@ jobs:
     - name: Install project
       run: poetry install --no-interaction
 
+    - name: Verify DVC configuration
+      run: |
+        poetry run dvc --version
+        poetry run dvc dag || echo "DVC pipeline not yet run"
+
     - name: Run linters
       run: |
         poetry run ruff check src/ tests/

@@ -1,0 +1,36 @@
+# Dockerfile для TorchServe сервиса
+FROM pytorch/torchserve:latest
+
+# Установка системных зависимостей
+RUN apt-get update && apt-get install -y \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Рабочая директория
+WORKDIR /app
+
+# Копирование архива модели
+# Создаём директорию для model-store
+RUN mkdir -p /app/model-store
+
+# Копирование .mar файлов (если они есть в build context)
+# Используем COPY с директорией - если файлов нет, директория будет пустой
+COPY model-store/ /app/model-store/
+
+# Копирование конфигурации (если нужна)
+COPY torchserve/config.properties /app/config.properties
+
+# Копирование исходного кода для handler (если нужен доступ к модулям)
+COPY src/ /app/src/
+ENV PYTHONPATH=/app/src
+
+# Создание директории для логов
+RUN mkdir -p /tmp
+
+# Запуск TorchServe
+CMD ["torchserve", \
+     "--start", \
+     "--model-store", "/app/model-store", \
+     "--models", "mymodel=mymodel.mar", \
+     "--ts-config", "/app/config.properties"]
+
